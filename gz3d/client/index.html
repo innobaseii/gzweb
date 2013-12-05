@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>gz3d</title>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+    <link rel="stylesheet" href="style/jquery-ui/jquery-ui.css"/>
+    <link rel="stylesheet" href="style/gz3d.css"/>
+    <script src="js/include/jquery-1.9.1.js"></script>
+    <script src="js/include/jquery-ui.js"></script>
+    <script src="js/include/three.js"></script>
+    <script src="js/include/OrbitControls.js"></script>
+    <script src="js/include/TransformControls.js"></script>
+    <script src="js/include/Detector.js"></script>
+    <script src="js/include/stats.min.js"></script>
+    <script src="js/include/eventemitter2.js"></script>
+    <script src="js/include/roslib.js"></script>
+    <script src="js/include/ColladaLoader.js"></script>
+    <script src="js/include/CopyShader.js"></script>
+    <script src="js/include/SSAOShader.js"></script>
+    <script src="js/include/EffectComposer.js"></script>
+    <script src="js/include/RenderPass.js"></script>
+    <script src="js/include/MaskPass.js"></script>
+    <script src="js/include/ShaderPass.js"></script>
+    <script src="gz3d.js"></script>
+
+    <style>
+      body {
+        color: #000;
+        font-family:Monospace;
+        font-size:13px;
+        text-align:center;
+        font-weight: bold;
+
+        background-color: #fff;
+        margin: 0px;
+        overflow: hidden;
+      }
+
+      #toolbar-manipulate {
+        padding: 3px;
+        display: inline-block;
+        float: right;
+      }
+      /* support: IE7 */
+      *+html #toolbar-manipulate {
+        display: inline-block;
+        float: right;
+      }
+
+      #toolbar-shapes {
+        padding: 1px;
+        display: inline-block;
+        float: right;
+      }
+      /* support: IE7 */
+      *+html #toolbar-shapes {
+        display: inline-block;
+        float: right;
+      }
+
+      #toolbar-play {
+        padding: 1px;
+        display: inline-block;
+
+      }
+      /* support: IE7 */
+      *+html #toolbar-play {
+        display: inline-block;
+      }
+
+      #menu {
+        float: left;
+        display: inline-block;
+      }
+
+      #world-stats {
+        display: inline-block;
+        vertical-align: middle;
+      }
+
+      #container {
+        position: static
+      }
+    </style>
+  </head>
+  <script id="heightmapVS" type="x-shader/x-vertex">
+    varying vec2 vUv;
+    varying vec3 vPosition;
+    varying vec3 vNormal;
+
+    void main( void ) {
+      vUv = uv;
+      vPosition = position;
+      vNormal = normal;
+
+      gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+    }
+  </script>
+
+  <script id="heightmapFS" type="x-shader/x-fragment">
+
+    uniform sampler2D texture0;
+    uniform sampler2D texture1;
+    uniform sampler2D texture2;
+
+    uniform float repeat0;
+    uniform float repeat1;
+    uniform float repeat2;
+
+    uniform float minHeight1;
+    uniform float minHeight2;
+
+    uniform float fadeDist1;
+    uniform float fadeDist2;
+
+    uniform vec3 ambient;
+    uniform vec3 lightDiffuse;
+    uniform vec3 lightDir;
+
+    varying vec2 vUv;
+    varying vec3 vPosition;
+    varying vec3 vNormal;
+
+    float blend(float distance, float fadeDist) {
+      float alpha = distance / fadeDist;
+      if (alpha < 0.0) {
+        alpha = 0.0;
+      }
+      if (alpha > 1.0) {
+        alpha = 1.0;
+      }
+      return alpha;
+    }
+
+    void main()
+    {
+      // Texture loading
+      vec3 diffuse0 = texture2D( texture0, vUv*repeat0 ).rgb;
+      vec3 diffuse1 = texture2D( texture1, vUv*repeat1 ).rgb;
+      vec3 diffuse2 = texture2D( texture2, vUv*repeat2 ).rgb;
+
+      // Get base texture
+      vec3 fragcolor = diffuse0;
+
+      // texture level 1
+      fragcolor = mix(
+        fragcolor,
+        diffuse1,
+        blend(vPosition.z - minHeight1, fadeDist1)
+      );
+
+      // texture level 2
+      fragcolor = mix(
+        fragcolor,
+        diffuse2,
+        blend(vPosition.z - (minHeight1 + minHeight2), fadeDist2)
+      );
+
+      vec3 lightDirNorm = normalize(lightDir);
+      float intensity = max(dot(vNormal, lightDirNorm), 0.0);
+      vec3 vLightFactor = ambient + lightDiffuse * intensity;
+      gl_FragColor = vec4(fragcolor.rgb * vLightFactor, 1.0);
+    }
+  </script>
+
+  <body>
+    <div>
+      <ul id='menu'>
+        <li>
+          <a href='#'>Edit</a>
+          <ul>
+            <li id='reset-world'><a href='#'>Reset World</a></li>
+            <li id='reset-model'><a href='#'>Reset Model Poses</a></li>
+          </ul>
+        </li>
+        <li>
+          <a href='#'>View</a>
+          <ul>
+            <li id='view-collisions'><a href='#'>View Collisions</a></li>
+          </ul>
+        </li>
+      </ul>
+    </div>
+    <script>
+      $( "#menu" ).menu({
+          position: {at: "left bottom"}
+        });
+    </script>
+
+    <div id='toolbar' class='ui-widget-content'>
+      <div id="toolbar-play" >
+        <button id="play">Play</button>
+      </div>
+
+      <div id='world-stats'>
+        <table>
+          <tr>
+            <td>Sim Time: </td>
+            <td id='sim-time-value'>00 00:00:00</td>
+            <td>&nbsp;</td>
+            <td>Real Time: </td>
+            <td id='real-time-value'>00 00:00:00</td>
+          </tr>
+        </table>
+      </div>
+
+      <div id='toolbar-shapes'>
+        <button id="box">Add Box</button>
+        <button id="sphere">Add Sphere</button>
+        <button id="cylinder">Add Cylinder</button>
+      </div>
+
+      <div id='toolbar-manipulate'>
+        <input type='radio' id='arrow' name='radio' checked='checked' />
+            <label for='arrow' />View Mode</label>
+        <input type='radio' id='translate' name='radio'>
+            <label for='translate' />Move Mode</label>
+      </div>
+
+      <div class"clear"></div>
+    </div>
+    <div id="container"></div>
+
+
+    <script>
+      if (!Detector.webgl)
+        Detector.addGetWebGLMessage();
+
+      var container, stats;
+      var scene;
+      var cross;
+      var visuals = {};
+
+      init();
+      animate();
+
+      function init()
+      {
+        scene = new GZ3D.Scene();
+        gui = new GZ3D.Gui(scene);
+        iface = new GZ3D.GZIface(scene, gui);
+
+        container = document.getElementById( 'container' );
+        container.appendChild(scene.getDomElement());
+
+        stats = new Stats();
+        stats.domElement.style.position = 'absolute';
+        stats.domElement.style.bottom = '0px';
+        stats.domElement.style.zIndex = 100;
+        container.appendChild( stats.domElement );
+
+        window.addEventListener( 'resize', onWindowResize, false);
+      }
+
+      function onWindowResize()
+      {
+        scene.setWindowSize(window.innerWidth, window.innerHeight);
+      }
+
+      function animate()
+      {
+        requestAnimationFrame(animate);
+        render();
+      }
+
+      function render()
+      {
+        scene.render();
+        stats.update();
+      }
+    </script>
+
+  </body>
+</html>
