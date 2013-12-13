@@ -12,14 +12,9 @@ Dependencies: sudo apt-get install the following:
 
     sudo apt-get install libjansson-dev nodejs npm libboost-dev
 
-Install nodejs modules
+Install nodejs modules. From the gzweb root directory:
 
-    npm install http-server -g
-    npm install -g node-gyp
-
-From the gzweb root directory
-
-    npm install websocket
+    npm install
 
 # Build
 
@@ -28,7 +23,7 @@ put them in the right directory and prepare them for the web. To do this,
 you'll need to source the gazebo/drcsim setup.sh files, and run a deploy script.
 
     # if you have drcsim then source /usr/share/drcsim/setup.sh
-    ./usr/share/gazebo/setup.sh
+    . /usr/share/gazebo/setup.sh
 
 Run the deploy script, this downloads models from the web and may take a couple of minutes.
 
