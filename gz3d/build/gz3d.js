@@ -3342,33 +3342,23 @@ GZ3D.Scene.prototype.init = function()
   this.scene.add(this.radialMenu.menu);
 
   // Bounding Box
-  var vertices = [
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0),
-    new THREE.Vector3(0, 0, 0)
-  ];
+  var zeroVec = new THREE.Vector3(0, 0, 0);
   var boxGeometry = new THREE.Geometry();
   boxGeometry.vertices.push(
-    vertices[0], vertices[1],
-    vertices[1], vertices[2],
-    vertices[2], vertices[3],
-    vertices[3], vertices[0],
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
 
-    vertices[4], vertices[5],
-    vertices[5], vertices[6],
-    vertices[6], vertices[7],
-    vertices[7], vertices[4],
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
 
-    vertices[0], vertices[4],
-    vertices[1], vertices[5],
-    vertices[2], vertices[6],
-    vertices[3], vertices[7]
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec,
+    zeroVec, zeroVec
   );
   this.boundingBox = new THREE.Line(boxGeometry,
       new THREE.LineBasicMaterial({color: 0xffffff}),
