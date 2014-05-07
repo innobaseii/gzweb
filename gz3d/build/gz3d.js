@@ -134,8 +134,19 @@ $(function()
       guiEvents.emit('spawn_entity_start', 'cylinder');
     });
 
+    $( '#insert-bowl' ).click(function() {
+      guiEvents.emit('close_panel');
+      guiEvents.emit('spawn_entity_start', 'bowl');
+    });
+
     $('#clock-header-fieldset')
         .css('visibility','hidden');
+
+    $('#insert-header-fieldset')
+        .css('position', 'absolute')
+        .css('right', '40.4em')
+        .css('top', '0em')
+        .css('z-index', '1000');
 
     $('#play-header-fieldset')
         .css('position', 'absolute')
@@ -177,12 +188,24 @@ $(function()
         .css('right', '0.5em')
         .css('top', '0em')
         .css('z-index', '1000');
+
+    $('#insert-menu')
+        .css('display', 'none')
+        .css('background-color', '#2a2a2a')
+        .css('padding', '10px')
+        .css('z-index', '1000')
+        .css('width', '100%');
   }
 
   $('.header-button')
       .css('float', 'left')
       .css('height', '1.45em')
       .css('padding', '0.65em');
+
+  $('#insertButton').click(function(){
+        $('#leftPanel').panel('close');
+        $('#insert-menu').slideToggle('fast');
+    });
 
   $( '#leftPanel' ).on('panelclose', function()
       {
@@ -700,6 +723,8 @@ GZ3D.GZIface.prototype.init = function()
         this.scene.add(modelObj);
       }
 
+      // TODOin: consider this
+
       // visuals may arrive out of order (before the model msg),
       // add the visual in if we find its parent here
       var len = this.visualsToAdd.length;
@@ -1037,6 +1062,7 @@ GZ3D.GZIface.prototype.updateStatsGuiFromMsg = function(stats)
   this.gui.setSimTime(simTimeValue);
 };
 
+// TODOin: something like this in gzspawn
 GZ3D.GZIface.prototype.createModelFromMsg = function(model)
 {
   var modelObj = new THREE.Object3D();
@@ -4724,6 +4750,8 @@ GZ3D.SpawnModel.prototype.init = function()
  * @param {string} entity
  * @param {function} callback
  */
+
+ // TODOin: entity: still take name and then check against db
 GZ3D.SpawnModel.prototype.start = function(entity, callback)
 {
   if (this.active)
@@ -4737,6 +4765,7 @@ GZ3D.SpawnModel.prototype.start = function(entity, callback)
   this.callback = callback;
 
   this.obj = new THREE.Object3D();
+
   var mesh;
   if (entity === 'box')
   {
@@ -4753,13 +4782,25 @@ GZ3D.SpawnModel.prototype.start = function(entity, callback)
     mesh = this.scene.createCylinder(0.5, 1.0);
     this.obj.name = 'unit_cylinder_' + (new Date()).getTime();
   }
+  else
+  {
+    // TODOin: find entity in database
+    console.log('insert '+entity);
+
+    mesh = this.scene.createBox(1, 1, 1);
+    this.obj.name = entity + '_' + (new Date()).getTime();
+
+  }
+
+  this.obj.add(mesh);
+
+  // TODOin: add all meshes like GZIface.createModelFromMsg
 
   // temp model appears within current view
   var pos = new THREE.Vector2(window.window.innerWidth/2, window.innerHeight/2);
   var intersect = new THREE.Vector3();
   this.scene.getRayCastModel(pos, intersect);
 
-  this.obj.add(mesh);
   this.obj.position.x = intersect.x;
   this.obj.position.y = intersect.y;
   this.obj.position.z += 0.5;
