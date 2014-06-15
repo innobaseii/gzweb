@@ -82,16 +82,9 @@ GZ3D.Scene.prototype.init = function()
       function(event) {that.onPointerUp(event);}, false );
 
   // Handles for translating and rotating objects
-  if (this.isTouchDevice)
-  {
-    this.modelManipulator = new GZ3D.Manipulator(this.camera, true,
+  this.modelManipulator = new GZ3D.Manipulator(this.camera, this.isTouchDevice,
       this.getDomElement());
-  }
-  else
-  {
-    this.modelManipulator = new GZ3D.Manipulator(this.camera, false,
-      this.getDomElement());
-  }
+
   this.timeDown = null;
 
   this.controls = new THREE.OrbitControls(this.camera);
@@ -167,7 +160,7 @@ GZ3D.Scene.prototype.init = function()
 
 /**
  * Window event callback
- * @param {} event - click or tap events (select/deselect models and manipulators)
+ * @param {} event
  */
 GZ3D.Scene.prototype.onPointerDown = function(event)
 {
@@ -389,8 +382,14 @@ GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
     for (var i = 0; i < objects.length; ++i)
     {
       model = objects[i].object;
+      if (model.name.indexOf('_lightHelper') >= 0)
+      {
+        model = model.parent;
+        break;
+      }
+
       if (!this.modelManipulator.hovered &&
-          (objects[i].object.name === 'plane'))
+          (model.name === 'plane'))
       {
         // model = null;
         point = objects[i].point;
@@ -1516,16 +1515,20 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
  */
 GZ3D.Scene.prototype.onRightClick = function(event, callback)
 {
-  if(this.manipulationMode === 'view')
+  if (this.modelManipulator.object)
   {
-    var pos = new THREE.Vector2(event.clientX, event.clientY);
-    var model = this.getRayCastModel(pos, new THREE.Vector3());
+    this.hideBoundingBox();
+    this.modelManipulator.detach();
+    this.scene.remove(this.modelManipulator.gizmo);
+  }
 
-    if(model && model.name !== '' && model.name !== 'plane' &&
-        this.modelManipulator.pickerNames.indexOf(model.name) === -1)
-    {
-      callback(model);
-    }
+  var pos = new THREE.Vector2(event.clientX, event.clientY);
+  var model = this.getRayCastModel(pos, new THREE.Vector3());
+
+  if(model && model.name !== '' && model.name !== 'plane' &&
+      this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+  {
+    callback(model);
   }
 };
 
