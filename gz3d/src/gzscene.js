@@ -84,16 +84,9 @@ GZ3D.Scene.prototype.init = function()
       function(event) {that.onPointerUp(event);}, false );
 
   // Handles for translating and rotating objects
-  if (this.isTouchDevice)
-  {
-    this.modelManipulator = new GZ3D.Manipulator(this.camera, true,
+  this.modelManipulator = new GZ3D.Manipulator(this.camera, this.isTouchDevice,
       this.getDomElement());
-  }
-  else
-  {
-    this.modelManipulator = new GZ3D.Manipulator(this.camera, false,
-      this.getDomElement());
-  }
+
   this.timeDown = null;
 
   this.controls = new THREE.OrbitControls(this.camera);
@@ -169,7 +162,7 @@ GZ3D.Scene.prototype.init = function()
 
 /**
  * Window event callback
- * @param {} event - click or tap events (select/deselect models and manipulators)
+ * @param {} event
  */
 GZ3D.Scene.prototype.onPointerDown = function(event)
 {
@@ -385,8 +378,14 @@ GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
     for (var i = 0; i < objects.length; ++i)
     {
       model = objects[i].object;
+      if (model.name.indexOf('_lightHelper') >= 0)
+      {
+        model = model.parent;
+        break;
+      }
+
       if (!this.modelManipulator.hovered &&
-          (objects[i].object.name === 'plane'))
+          (model.name === 'plane'))
       {
         // model = null;
         point = objects[i].point;
@@ -515,6 +514,8 @@ GZ3D.Scene.prototype.setWindowSize = function(width, height)
  */
 GZ3D.Scene.prototype.add = function(model)
 {
+  model.isTransparent = false;
+  model.isWireframe = false;
   this.scene.add(model);
 };
 
@@ -687,6 +688,82 @@ GZ3D.Scene.prototype.createBox = function(width, height, depth)
   var mesh = new THREE.Mesh(geometry, this.spawnedShapeMaterial);
   mesh.castShadow = true;
   return mesh;
+};
+
+/**
+ * Create point light
+ * @param {} color
+ * @param {} intensity
+ * @returns {THREE.Mesh}
+ */
+GZ3D.Scene.prototype.createPointLight = function(color, intensity)
+{
+  var obj = new THREE.Object3D();
+  var lightObj = new THREE.PointLight(color, intensity);
+
+  var helperGeometry = new THREE.OctahedronGeometry(0.25, 0);
+  helperGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI/2));
+  var helperMaterial = new THREE.MeshBasicMaterial(
+        {wireframe: true, color: 0x00ff00});
+  var helper = new THREE.Mesh(helperGeometry, helperMaterial);
+
+  obj.add(lightObj);
+  obj.add(helper);
+  return obj;
+};
+
+/**
+ * Create spot light
+ * @param {} color
+ * @param {} intensity
+ * @returns {THREE.Mesh}
+ */
+GZ3D.Scene.prototype.createSpotLight = function(color, intensity)
+{
+  var obj = new THREE.Object3D();
+  var lightObj = new THREE.SpotLight(color, intensity);
+  lightObj.distance = 20;
+  lightObj.position.set(0,0,0);
+
+  var helperGeometry = new THREE.CylinderGeometry(0, 0.3, 0.2, 4, 1, true);
+  helperGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI/2));
+  var helperMaterial = new THREE.MeshBasicMaterial(
+        {wireframe: true, color: 0x00ff00});
+  var helper = new THREE.Mesh(helperGeometry, helperMaterial);
+
+  obj.add(lightObj);
+  obj.add(helper);
+  return obj;
+};
+
+/**
+ * Create directional light
+ * @param {} color
+ * @param {} intensity
+ * @returns {THREE.Mesh}
+ */
+GZ3D.Scene.prototype.createDirectionalLight = function(color, intensity)
+{
+  var obj = new THREE.Object3D();
+  var lightObj = new THREE.DirectionalLight(color, intensity);
+
+  var helperGeometry = new THREE.Geometry();
+  helperGeometry.vertices.push(new THREE.Vector3(-0.5, -0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3(-0.5,  0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3(-0.5,  0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3( 0.5,  0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3( 0.5,  0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3( 0.5, -0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3( 0.5, -0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3(-0.5, -0.5, 0));
+  helperGeometry.vertices.push(new THREE.Vector3(   0,    0, 0));
+  helperGeometry.vertices.push(new THREE.Vector3(   0,    0, -0.5));
+  var helperMaterial = new THREE.LineBasicMaterial({color: 0x00ff00});
+  var helper = new THREE.Line(helperGeometry, helperMaterial, THREE.LinePieces);
+
+  obj.add(lightObj);
+  obj.add(helper);
+  return obj;
 };
 
 /**
@@ -1511,15 +1588,102 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
  */
 GZ3D.Scene.prototype.onRightClick = function(event, callback)
 {
-  if(this.manipulationMode === 'view')
+  if (this.modelManipulator.object)
   {
-    var pos = new THREE.Vector2(event.clientX, event.clientY);
-    var model = this.getRayCastModel(pos, new THREE.Vector3());
+    this.hideBoundingBox();
+    this.modelManipulator.detach();
+    this.scene.remove(this.modelManipulator.gizmo);
+  }
 
-    if(model && model.name !== '' && model.name !== 'plane' &&
-        this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+  var pos = new THREE.Vector2(event.clientX, event.clientY);
+  var model = this.getRayCastModel(pos, new THREE.Vector3());
+
+  if(model && model.name !== '' && model.name !== 'plane' &&
+      this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+  {
+    callback(model);
+  }
+};
+
+/**
+ * Toggle model transparency
+ * @param {} model
+ */
+GZ3D.Scene.prototype.toggleTransparency = function(model)
+{
+  var descendants = [];
+  model.getDescendants(descendants);
+  for (var i = 0; i < descendants.length; ++i)
+  {
+    if (descendants[i].material &&
+        descendants[i].name.indexOf('boundingBox') === -1 &&
+        descendants[i].name.indexOf('COLLISION') === -1 &&
+        descendants[i].parent.name.indexOf('COLLISION') === -1 &&
+        descendants[i].name.indexOf('wireframe') === -1)
     {
-      callback(model);
+      descendants[i].material.transparent = true;
+      if (model.isTransparent)
+      {
+        descendants[i].material.opacity =
+            descendants[i].material.originalOpacity ?
+            descendants[i].material.originalOpacity : 1.0;
+      }
+      else
+      {
+        descendants[i].material.originalOpacity =
+            descendants[i].material.opacity;
+        descendants[i].material.opacity = 0.5;
+      }
     }
   }
+  model.isTransparent = !model.isTransparent;
+};
+
+/**
+ * Toggle model wireframe
+ * @param {} model
+ */
+GZ3D.Scene.prototype.toggleWireframe = function(model)
+{
+  var wireframe;
+  var descendants = [];
+  model.getDescendants(descendants);
+  for (var i = 0; i < descendants.length; ++i)
+  {
+    if (descendants[i].material &&
+        descendants[i].geometry &&
+        descendants[i].name.indexOf('boundingBox') === -1 &&
+        descendants[i].name.indexOf('COLLISION') === -1 &&
+        descendants[i].parent.name.indexOf('COLLISION') === -1 &&
+        descendants[i].name.indexOf('wireframe') === -1)
+    {
+      if (model.isWireframe)
+      {
+        wireframe = descendants[i].getObjectByName('wireframe');
+        if (wireframe)
+        {
+          wireframe.visible = false;
+        }
+        descendants[i].material.visible = true;
+      }
+      else
+      {
+        wireframe = descendants[i].getObjectByName('wireframe');
+        if (wireframe)
+        {
+          wireframe.visible = true;
+        }
+        else
+        {
+          var mesh = new THREE.Mesh( descendants[i].geometry,
+              new THREE.MeshBasicMaterial({color: 0xffffff}));
+          wireframe = new THREE.WireframeHelper( mesh );
+          wireframe.name = 'wireframe';
+          descendants[i].add( wireframe );
+        }
+        descendants[i].material.visible = false;
+      }
+    }
+  }
+  model.isWireframe = !model.isWireframe;
 };
