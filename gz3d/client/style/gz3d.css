@@ -152,6 +152,10 @@ body
   margin: 0em;
   width: 100%;
 }
+.insert-menu-item-light img {
+          height:4em;
+          margin-top:0.6em;
+      }
 /* smaller panel for narrow screens*/
 @media (max-width: 35em)
 {
@@ -185,5 +189,9 @@ body
   {
     font-size: 0.7em;
   }
+  .insert-menu-item-light img {
+          height:2.7em;
+          margin-top:0.4em;
+        }
 }
 
