@@ -555,6 +555,15 @@ function getNameFromPath(path)
   }
 }
 
+// World tree list
+function treeControl($scope)
+{
+  $scope.updateModelStats = function()
+  {
+    $scope.models = modelStats;
+  };
+}
+
 
 /**
  * Graphical user interface
@@ -970,4 +979,23 @@ GZ3D.Gui.prototype.setRealTime = function(realTime)
 GZ3D.Gui.prototype.setSimTime = function(simTime)
 {
   $('.sim-time-value').text(simTime);
+};
+
+/**
+ * Update scene stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setSceneStats = function(stats)
+{
+  $('#sceneName').text('Name: '+stats.name);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats)
+{
+  modelStats.push(stats.name);
 };

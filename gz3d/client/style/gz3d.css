@@ -46,6 +46,10 @@ body
 {
   top: 7.8em;
 }
+.tab:nth-of-type(3)
+{
+  top: 13.8em;
+}
 /* panel */
 #leftPanel
 {

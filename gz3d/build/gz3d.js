@@ -560,6 +560,15 @@ function getNameFromPath(path)
   }
 }
 
+// World tree list
+function treeControl($scope)
+{
+  $scope.updateModelStats = function()
+  {
+    $scope.models = modelStats;
+  };
+}
+
 
 /**
  * Graphical user interface
@@ -977,6 +986,25 @@ GZ3D.Gui.prototype.setSimTime = function(simTime)
   $('.sim-time-value').text(simTime);
 };
 
+/**
+ * Update scene stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setSceneStats = function(stats)
+{
+  $('#sceneName').text('Name: '+stats.name);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats)
+{
+  modelStats.push(stats.name);
+};
+
 //var GAZEBO_MODEL_DATABASE_URI='http://gazebosim.org/models';
 
 GZ3D.GZIface = function(scene, gui)
@@ -1088,6 +1116,8 @@ GZ3D.GZIface.prototype.onConnected = function()
       this.scene.add(modelObj);
     }
 
+    this.updateSceneStatsFromMsg(message);
+
     this.sceneTopic.unsubscribe();
   };
   this.sceneTopic.subscribe(sceneUpdate.bind(this));
@@ -1171,6 +1201,7 @@ GZ3D.GZIface.prototype.onConnected = function()
         i++;
       }
     }
+    this.updateModelStatsFromMsg(message);
   };
 
   modelInfoTopic.subscribe(modelUpdate.bind(this));
@@ -1484,6 +1515,16 @@ GZ3D.GZIface.prototype.updateStatsGuiFromMsg = function(stats)
 
   this.gui.setRealTime(realTimeValue);
   this.gui.setSimTime(simTimeValue);
+};
+
+GZ3D.GZIface.prototype.updateSceneStatsFromMsg = function(stats)
+{
+  this.gui.setSceneStats(stats);
+};
+
+GZ3D.GZIface.prototype.updateModelStatsFromMsg = function(stats)
+{
+  this.gui.setModelStats(stats);
 };
 
 GZ3D.GZIface.prototype.createModelFromMsg = function(model)
