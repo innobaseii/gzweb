@@ -8,6 +8,14 @@ var emUnits = function(value)
     };
 
 var isTouchDevice = 'ontouchstart' in window || 'onmsgesturechange' in window;
+var isWideScreen = function()
+    {
+      return $(window).width() / emUnits(1) > 35;
+    };
+var isTallScreen = function()
+    {
+      return $(window).height() / emUnits(1) > 35;
+    };
 
 var modelList =
   [
@@ -173,24 +181,28 @@ $(function()
   $( '#clock-touch' ).popup('option', 'arrow', 't');
   $('#notification-popup-screen').remove();
 
-  // Panel starts open for wide screens
-  if ($(window).width() / emUnits(1) > 35)
+  if (isWideScreen())
   {
-    $('#leftPanel').panel('open');
+    guiEvents.emit('openTab','mainMenu');
   }
 
-  // Clicks/taps// Touch devices
+  if (isTallScreen())
+  {
+    $('.collapsible_header').click();
+  }
+
+  // Touch devices
   if (isTouchDevice)
   {
     $('#play-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '15.8em')
+        .css('right', '13.6em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#clock-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '12.8em')
+        .css('right', '10.2em')
         .css('top', '0em')
         .css('z-index', '1000');
 
@@ -199,7 +211,7 @@ $(function()
 
     $('#mode-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '4.5em')
+        .css('right', '0.5em')
         .css('top', '0.15em')
         .css('z-index', '1000');
 
@@ -212,19 +224,14 @@ $(function()
     $('#cylinder-header-fieldset')
         .css('visibility','hidden');
 
-    $('#insert-header-fieldset')
-        .css('position', 'absolute')
-        .css('right', '0.5em')
-        .css('top', '0em')
-        .css('z-index', '1000');
+    $('#pointlight-header-fieldset')
+        .css('visibility','hidden');
 
-    $('#footer').touchstart(function(event){
-        guiEvents.emit('pointerOnMenu');
-    });
+    $('#spotlight-header-fieldset')
+        .css('visibility','hidden');
 
-    $('#footer').touchend(function(event){
-        guiEvents.emit('pointerOffMenu');
-    });
+    $('#directionallight-header-fieldset')
+        .css('visibility','hidden');
 
     $('#leftPanel').touchstart(function(event){
         guiEvents.emit('pointerOnMenu');
@@ -255,22 +262,22 @@ $(function()
       });
 
     // long press on insert menu item
-    var press_time_footer = 400;
+    var press_time_insert = 400;
     $('[id^="insert-entity-"]')
       .on('touchstart', function (event) {
         var path = $(this).attr('id');
         path = path.substring(14); // after 'insert-entity-'
         $(this).data('checkdown', setTimeout(function () {
-          guiEvents.emit('longpress_footer_start', event, path);
-        }, press_time_footer));
+          guiEvents.emit('longpress_insert_start', event, path);
+        }, press_time_insert));
       })
       .on('touchend', function (event) {
         clearTimeout($(this).data('checkdown'));
-        guiEvents.emit('longpress_footer_end',event,false);
+        guiEvents.emit('longpress_insert_end',event,false);
       })
       .on('touchmove', function (event) {
         clearTimeout($(this).data('checkdown'));
-        guiEvents.emit('longpress_footer_move',event);
+        guiEvents.emit('longpress_insert_move',event);
       });
   }
   // Mouse devices
@@ -291,16 +298,16 @@ $(function()
 
     $('#play-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '35.2em')
+        .css('right', '41.2em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#clock-mouse')
         .css('position', 'absolute')
-        .css('right', '22.4em')
+        .css('right', '29.0em')
         .css('top', '0.5em')
         .css('z-index', '100')
-        .css('width', '12em')
+        .css('width', '11em')
         .css('height', '2.5em')
         .css('background-color', '#333333')
         .css('padding', '3px')
@@ -308,51 +315,45 @@ $(function()
 
     $('#mode-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '16.4em')
+        .css('right', '24.4em')
         .css('top', '0.15em')
         .css('z-index', '1000');
 
     $('#box-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '9.5em')
+        .css('right', '15.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#sphere-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '6.5em')
+        .css('right', '12.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#cylinder-header-fieldset')
         .css('position', 'absolute')
+        .css('right', '9.5em')
+        .css('top', '0em')
+        .css('z-index', '1000');
+
+    $('#pointlight-header-fieldset')
+        .css('position', 'absolute')
+        .css('right', '6.5em')
+        .css('top', '0em')
+        .css('z-index', '1000');
+
+    $('#spotlight-header-fieldset')
+        .css('position', 'absolute')
         .css('right', '3.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
-    $('#insert-header-fieldset')
+    $('#directionallight-header-fieldset')
         .css('position', 'absolute')
         .css('right', '0.5em')
         .css('top', '0em')
         .css('z-index', '1000');
-
-    $('#footer').bind('mousewheel', function(event){
-        event.originalEvent.preventDefault();
-        var id = $('.insert-menus:visible').attr('id');
-
-        var value = document.getElementById(id).scrollLeft;
-        value = value - event.originalEvent.wheelDelta/6;
-
-        $('.insert-menus:visible').scrollLeft(value);
-    });
-
-    $('#footer').mouseenter(function(event){
-        guiEvents.emit('pointerOnMenu');
-    });
-
-    $('#footer').mouseleave(function(event){
-        guiEvents.emit('pointerOffMenu');
-    });
 
     $('#leftPanel').mouseenter(function(event){
         guiEvents.emit('pointerOnMenu');
@@ -381,58 +382,35 @@ $(function()
   $('.header-button')
       .css('float', 'left')
       .css('height', '1.45em')
+      .css('width', '1.45em')
       .css('padding', '0.65em');
 
-  $('#insertButton').click(function()
+  $('.tab').click(function()
       {
-        $('#leftPanel').panel('close');
-        if($('#insert-menu').is(':visible'))
+        var idTab = $(this).attr('id');
+        var idMenu = idTab.substring(0,idTab.indexOf('Tab'));
+
+        if($('#'+idMenu).is(':visible')  ||
+           $('[id^="'+idMenu+'-"]').is(':visible'))
         {
-          $('#insert-menu').hide();
+          guiEvents.emit('closeTabs', true);
         }
         else
         {
-          $('#insert-menu').show();
-          $('[id^="insert-menu-"]').hide();
-          $('.insert-menu-title')
-              .css('margin-left',
-                  document.getElementById('insert-menu').scrollLeft);
+          guiEvents.emit('openTab',idMenu);
         }
       });
 
-  $('.insert-menu-back').click(function()
+  $('.panelTitle').click(function()
       {
-        $('#insert-menu').show();
-        $('[id^="insert-menu-"]').hide();
-        $('.insert-menu-title')
-            .css('margin-left',
-                document.getElementById('insert-menu').scrollLeft);
+        guiEvents.emit('closeTabs', true);
       });
 
-  $('.insert-menu-close').click(function()
+  // Only for insert for now
+  $('.panelSubTitle').click(function()
       {
-        $('.insert-menus').hide();
-      });
-
-  $('.insert-menus').on('scroll', function()
-      {
-        var id = $(this).attr('id');
-
-        $('.insert-menu-title')
-            .css('margin-left', document.getElementById(id).scrollLeft);
-      });
-
-  $('#leftPanel').on('panelopen', function()
-      {
-        if($('.insert-menus').is(':visible'))
-        {
-          $('.insert-menus').hide();
-        }
-      });
-
-  $('#leftPanel').on('panelclose', function()
-      {
-        $('#panelButton').removeClass('ui-btn-active');
+        $('.insertCategory').hide();
+        $('#insertMenu').show();
       });
 
   $('#view-mode').click(function()
@@ -447,21 +425,15 @@ $(function()
       {
         guiEvents.emit('manipulation_mode', 'rotate');
       });
-  $('#box-header').click(function()
+
+  $('[id^="header-insert-"]').click(function()
       {
-        guiEvents.emit('close_panel');
-        guiEvents.emit('spawn_entity_start', 'box');
+        var entity = $(this).attr('id');
+        entity = entity.substring(14); // after 'header-insert-'
+        guiEvents.emit('closeTabs', false);
+        guiEvents.emit('spawn_entity_start', entity);
       });
-  $('#sphere-header').click(function()
-      {
-        guiEvents.emit('close_panel');
-        guiEvents.emit('spawn_entity_start', 'sphere');
-      });
-  $('#cylinder-header').click(function()
-      {
-        guiEvents.emit('close_panel');
-        guiEvents.emit('spawn_entity_start', 'cylinder');
-      });
+
   $('#play').click(function()
       {
         if ( $('#playText').html().indexOf('Play') !== -1 )
@@ -494,30 +466,30 @@ $(function()
   $('#reset-model').click(function()
       {
         guiEvents.emit('model_reset');
-        guiEvents.emit('close_panel');
+        guiEvents.emit('closeTabs', false);
       });
   $('#reset-world').click(function()
       {
         guiEvents.emit('world_reset');
-        guiEvents.emit('close_panel');
+        guiEvents.emit('closeTabs', false);
       });
   $('#reset-view').click(function()
       {
         guiEvents.emit('view_reset');
-        guiEvents.emit('close_panel');
+        guiEvents.emit('closeTabs', false);
       });
   $('#view-collisions').click(function()
       {
         guiEvents.emit('show_collision');
-        guiEvents.emit('close_panel');
+        guiEvents.emit('closeTabs', false);
       });
   $( '#snap-to-grid' ).click(function() {
     guiEvents.emit('snap_to_grid');
-    guiEvents.emit('close_panel');
+    guiEvents.emit('closeTabs', false);
   });
   $( '#toggle-notifications' ).click(function() {
     guiEvents.emit('toggle_notifications');
-    guiEvents.emit('close_panel');
+    guiEvents.emit('closeTabs', false);
   });
 
   // Disable Esc key to close panel
@@ -543,6 +515,21 @@ $(function()
   $( '#delete-entity' ).click(function() {
     guiEvents.emit('delete_entity');
   });
+
+  $(window).resize(function()
+  {
+    if ($('.leftPanels').is(':visible'))
+    {
+      if (isWideScreen())
+      {
+        $('.tab').css('left', '15em');
+      }
+      else
+      {
+        $('.tab').css('left', '10.5em');
+      }
+    }
+  });
 });
 
 // Insert menu
@@ -550,33 +537,11 @@ function insertControl($scope)
 {
   $scope.categories = modelList;
 
-  $scope.setItemWidth = function ()
-  {
-    $scope.itemWidth = 9.8;
-    if (window.innerWidth / window.innerHeight > 2 ||
-        window.innerWidth < emUnits(35))
-    {
-      $scope.itemWidth = 7.4;
-    }
-  };
-
-  $scope.setItemWidth();
-
-  $(window).resize(function()
-  {
-    $scope.$apply(function()
-    {
-       $scope.setItemWidth();
-    });
-  });
-
   $scope.openCategory = function(category)
   {
-    $('#insert-menu').hide();
-    var categoryID = 'insert-menu-'+category;
+    $('#insertMenu').hide();
+    var categoryID = 'insertMenu-'+category;
     $('#' + categoryID).show();
-    $('.insert-menu-title')
-        .css('margin-left', document.getElementById(categoryID).scrollLeft);
   };
 
   $scope.spawnEntity = function(path)
@@ -599,6 +564,18 @@ function getNameFromPath(path)
   {
     return 'Cylinder';
   }
+  if(path === 'pointlight')
+  {
+    return 'Point Light';
+  }
+  if(path === 'spotlight')
+  {
+    return 'Spot Light';
+  }
+  if(path === 'directionallight')
+  {
+    return 'Directional Light';
+  }
 
   for(var i = 0; i < modelList.length; ++i)
   {
@@ -610,6 +587,21 @@ function getNameFromPath(path)
       }
     }
   }
+}
+
+// World tree list
+function treeControl($scope)
+{
+  //$scope.updateStats = function()
+  //{
+    $scope.models = modelStats;
+    $scope.lights = lightStats;
+  //};
+
+  $scope.selectEntity = function (name)
+  {
+    guiEvents.emit('selectEntity', name);
+  };
 }
 
 
@@ -634,7 +626,6 @@ GZ3D.Gui.prototype.init = function()
 {
   this.spawnState = null;
   this.longPressContainerState = null;
-  this.longPressFooterState = null;
   this.showNotifications = false;
 
   var that = this;
@@ -768,14 +759,6 @@ GZ3D.Gui.prototype.init = function()
       }
   );
 
-  guiEvents.on('close_panel', function()
-      {
-        if ($(window).width() / emUnits(1)< 35)
-        {
-          $('#leftPanel').panel('close');
-        }
-      }
-  );
 
   guiEvents.on('longpress_container_start',
       function (event)
@@ -834,12 +817,12 @@ GZ3D.Gui.prototype.init = function()
                 }
                 else if (type === 'transparent')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','transparent');
                 }
                 else if (type === 'wireframe')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','wireframe');
                 }
 
@@ -869,7 +852,7 @@ GZ3D.Gui.prototype.init = function()
       }
   );
 
-  guiEvents.on('longpress_footer_start', function (event, path)
+  guiEvents.on('longpress_insert_start', function (event, path)
       {
         navigator.vibrate(50);
         guiEvents.emit('spawn_entity_start', path);
@@ -877,13 +860,13 @@ GZ3D.Gui.prototype.init = function()
       }
   );
 
-  guiEvents.on('longpress_footer_end', function(event)
+  guiEvents.on('longpress_insert_end', function(event)
       {
         guiEvents.emit('spawn_entity_end');
       }
   );
 
-  guiEvents.on('longpress_footer_move', function(event)
+  guiEvents.on('longpress_insert_move', function(event)
       {
         guiEvents.emit('spawn_entity_move', event);
         event.stopPropagation();
@@ -909,46 +892,46 @@ GZ3D.Gui.prototype.init = function()
       }
   );
 
-  guiEvents.on('pointerOnMenu', function ()
-      {
-        that.scene.pointerOnMenu = true;
-      }
-  );
-
-  guiEvents.on('pointerOffMenu', function ()
-      {
-        that.scene.pointerOnMenu = false;
-      }
-  );
-
   guiEvents.on('right_click', function (event)
       {
         that.scene.onRightClick(event, function(entity)
             {
-              that.scene.selectedEntity = entity;
-              that.scene.showBoundingBox(entity);
+              that.scene.selectEntity(entity);
               $('.ui-popup').popup('close');
-              if (that.scene.selectedEntity.viewAs === 'transparent')
-              {
-                $('#view-transparent').buttonMarkup({icon: 'check'});
-              }
-              else
-              {
-                $('#view-transparent').buttonMarkup({icon: 'false'});
-              }
 
-              if (that.scene.selectedEntity.viewAs === 'wireframe')
+              if (entity.children[0] instanceof THREE.Light)
               {
-                $('#view-wireframe').buttonMarkup({icon: 'check'});
-              }
-              else
-              {
-                $('#view-wireframe').buttonMarkup({icon: 'false'});
-              }
-
-              $('#model-popup').popup('open',
+                $('#view-transparent').css('visibility','collapse');
+                $('#view-wireframe').css('visibility','collapse');
+                $('#model-popup').popup('open',
                   {x: event.clientX + emUnits(6),
-                   y: event.clientY + emUnits(3)});
+                   y: event.clientY + emUnits(-5)});
+              }
+              else
+              {
+                if (that.scene.selectedEntity.viewAs === 'transparent')
+                {
+                  $('#view-transparent').buttonMarkup({icon: 'check'});
+                }
+                else
+                {
+                  $('#view-transparent').buttonMarkup({icon: 'false'});
+                }
+
+                if (that.scene.selectedEntity.viewAs === 'wireframe')
+                {
+                  $('#view-wireframe').buttonMarkup({icon: 'check'});
+                }
+                else
+                {
+                  $('#view-wireframe').buttonMarkup({icon: 'false'});
+                }
+                $('#view-transparent').css('visibility','visible');
+                $('#view-wireframe').css('visibility','visible');
+                $('#model-popup').popup('open',
+                  {x: event.clientX + emUnits(6),
+                   y: event.clientY + emUnits(0)});
+              }
             });
       }
   );
@@ -956,7 +939,7 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('set_view_as', function (viewAs)
       {
         that.scene.setViewAs(that.scene.selectedEntity, viewAs);
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -965,7 +948,7 @@ GZ3D.Gui.prototype.init = function()
         that.emitter.emit('deleteEntity',that.scene.selectedEntity);
         guiEvents.emit('notification_popup','Model deleted');
         $('#model-popup').popup('close');
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -979,7 +962,90 @@ GZ3D.Gui.prototype.init = function()
       {
         that.scene.pointerOnMenu = false;
       }
-   );
+  );
+
+  guiEvents.on('openTab', function (id)
+      {
+        $('.leftPanels').hide();
+        $('#'+id).show();
+
+        if (isWideScreen())
+        {
+          $('.tab').css('left', '15em');
+        }
+        else
+        {
+          $('.tab').css('left', '10.5em');
+        }
+
+        $('.tab').css('border-left', '2em solid #2a2a2a');
+        $('#'+id+'Tab').css('border-left', '2em solid #aaaaaa');
+      }
+  );
+
+  guiEvents.on('closeTabs', function (force)
+      {
+        // Close for narrow viewports, force to always close
+        if (force || !isWideScreen())
+        {
+          $('.leftPanels').hide();
+          $('.tab').css('left', '0em');
+          $('.tab').css('border-left', '2em solid #2a2a2a');
+        }
+      }
+  );
+
+  guiEvents.on('setTreeSelected', function (object)
+      {
+        if (isWideScreen())
+        {
+          guiEvents.emit('openTab', 'treeMenu');
+        }
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          if (modelStats[i].name === object)
+          {
+            modelStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            modelStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          if (lightStats[i].name === object)
+          {
+            lightStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            lightStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('setTreeDeselected', function ()
+      {
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          modelStats[i].selected = 'unselectedTreeItem';
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          lightStats[i].selected = 'unselectedTreeItem';
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('selectEntity', function (name)
+      {
+        that.scene.selectEntity(name);
+      }
+  );
 };
 
 /**
@@ -1017,4 +1083,154 @@ GZ3D.Gui.prototype.setRealTime = function(realTime)
 GZ3D.Gui.prototype.setSimTime = function(simTime)
 {
   $('.sim-time-value').text(simTime);
+};
+
+/**
+ * Update scene stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setSceneStats = function(stats)
+{
+  $('#sceneName').text('Name: '+stats.name);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var thumbnail = this.findModelThumbnail(name);
+
+    var model = $.grep(modelStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (model.length === 0)
+    {
+      modelStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < modelStats.length; ++i)
+    {
+      if (modelStats[i].name === name)
+      {
+        modelStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+var lightStats = [];
+/**
+ * Update light stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setLightStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var type = stats.type;
+
+    var thumbnail;
+    switch(type)
+    {
+      case 2:
+          thumbnail = 'style/images/spotlight.png';
+          break;
+      case 3:
+          thumbnail = 'style/images/directionallight.png';
+          break;
+      default:
+          thumbnail = 'style/images/pointlight.png';
+    }
+
+    var light = $.grep(lightStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (light.length === 0)
+    {
+      lightStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < lightStats.length; ++i)
+    {
+      if (lightStats[i].name === name)
+      {
+        lightStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+/**
+ * Find thumbnail
+ * @param {} instanceName
+ */
+GZ3D.Gui.prototype.findModelThumbnail = function(instanceName)
+{
+  for(var i = 0; i < modelList.length; ++i)
+  {
+    for(var j = 0; j < modelList[i].models.length; ++j)
+    {
+      var path = modelList[i].models[j].modelPath;
+      if(instanceName.indexOf(path) >= 0)
+      {
+        return '/assets/'+path+'/thumbnails/0.png';
+      }
+    }
+  }
+  if(instanceName.indexOf('box') >= 0)
+  {
+    return 'style/images/box.png';
+  }
+  if(instanceName.indexOf('sphere') >= 0)
+  {
+    return 'style/images/sphere.png';
+  }
+  if(instanceName.indexOf('cylinder') >= 0)
+  {
+    return 'style/images/cylinder.png';
+  }
+  return 'style/images/box.png';
+};
+
+/**
+ * Update model stats
+ */
+GZ3D.Gui.prototype.updateStats = function()
+{
+  // Click triggers updateStats, there must be a better way to do it
+  // actually even without defining $scope.updateStats it works :O
+  $('#clickToUpdate').click();
 };
