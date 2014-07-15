@@ -92,6 +92,7 @@ GZ3D.Scene.prototype.init = function()
   this.timeDown = null;
 
   this.controls = new THREE.OrbitControls(this.camera);
+  this.scene.add(this.controls.targetIndicator);
 
   this.emitter = new EventEmitter2({ verbose: true });
 
@@ -165,13 +166,13 @@ GZ3D.Scene.prototype.init = function()
 GZ3D.Scene.prototype.initScene = function()
 {
   this.createGrid();
-  
+
   // create a sun light
   var color = new THREE.Color();
   color.r = 0.800000011920929;
   color.b = 0.800000011920929;
   color.g = 0.800000011920929;
-    
+
   var lightObj = new THREE.DirectionalLight(color.getHex());
   var dir = new THREE.Vector3(0.5, 0.1, -0.9);
   var target = dir;
@@ -194,27 +195,27 @@ GZ3D.Scene.prototype.initScene = function()
   lightObj.shadowBias = 0.0001;
 
   lightObj.position.set(negDir.x, negDir.y, negDir.z);
-  
+
   var position = [];
   position['x'] = 0;
   position['y'] = 0;
   position['z'] = 10;
-  
+
   var orientation = [];
   orientation['x'] = 0;
   orientation['y'] = 0;
   orientation['z'] = 0;
   orientation['w'] = 1;
-  
+
   this.setPose(lightObj, position, orientation);
-  
+
   lightObj.intensity = 0.8999999761581421;
   lightObj.castShadow = true;
   lightObj.shadowDarkness = 0.3;
   lightObj.name = 'sun';
 
   this.add(lightObj);
-  
+
 };
 
 /**
@@ -230,35 +231,48 @@ GZ3D.Scene.prototype.onPointerDown = function(event)
     return;
   }
 
-  var pointer, mainPointer = true;
+  var mainPointer = true;
+  var pos;
   if (event.touches)
   {
-    // Cancel in case of multitouch
-    if (event.touches.length !== 1)
+    if (event.touches.length === 1)
+    {
+      pos = new THREE.Vector2(
+          event.touches[0].clientX, event.touches[0].clientY);
+    }
+    else if (event.touches.length === 2)
+    {
+      pos = new THREE.Vector2(
+          (event.touches[0].clientX + event.touches[1].clientX)/2,
+          (event.touches[0].clientY + event.touches[1].clientY)/2);
+    }
+    else
     {
       return;
     }
-    pointer = event.touches[ 0 ];
   }
   else
   {
-    pointer = event;
-    if (pointer.which !== 1)
+    pos = new THREE.Vector2(
+          event.clientX, event.clientY);
+    if (event.which !== 1)
     {
       mainPointer = false;
     }
   }
 
-  // X-Y coordinates of where mouse clicked
-  var pos = new THREE.Vector2(pointer.clientX, pointer.clientY);
-
-  // See if there's a model on the direction of the click
   var intersect = new THREE.Vector3();
   var model = this.getRayCastModel(pos, intersect);
 
   if (intersect)
   {
     this.controls.target = intersect;
+  }
+
+  // Cancel in case of multitouch
+  if (event.touches && event.touches.length !== 1)
+  {
+    return;
   }
 
   // Manipulation modes
@@ -438,8 +452,9 @@ GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
         break;
       }
 
-      if (model.name === 'grid')
+      if (model.name === 'grid' || model.name === 'boundingBox')
       {
+        point = objects[i].point;
         model = null;
         continue;
       }
