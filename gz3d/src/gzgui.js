@@ -565,6 +565,21 @@ function getNameFromPath(path)
   }
 }
 
+// World tree list
+function treeControl($scope)
+{
+  //$scope.updateStats = function()
+  //{
+    $scope.models = modelStats;
+    $scope.lights = lightStats;
+  //};
+
+  $scope.selectEntity = function (name)
+  {
+    guiEvents.emit('selectEntity', name);
+  };
+}
+
 
 /**
  * Graphical user interface
@@ -778,12 +793,12 @@ GZ3D.Gui.prototype.init = function()
                 }
                 else if (type === 'transparent')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','transparent');
                 }
                 else if (type === 'wireframe')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','wireframe');
                 }
 
@@ -857,8 +872,7 @@ GZ3D.Gui.prototype.init = function()
       {
         that.scene.onRightClick(event, function(entity)
             {
-              that.scene.selectedEntity = entity;
-              that.scene.showBoundingBox(entity);
+              that.scene.selectEntity(entity);
               $('.ui-popup').popup('close');
 
               if (entity.children[0] instanceof THREE.Light)
@@ -901,7 +915,7 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('set_view_as', function (viewAs)
       {
         that.scene.setViewAs(that.scene.selectedEntity, viewAs);
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -910,7 +924,7 @@ GZ3D.Gui.prototype.init = function()
         that.emitter.emit('deleteEntity',that.scene.selectedEntity);
         guiEvents.emit('notification_popup','Model deleted');
         $('#model-popup').popup('close');
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -956,6 +970,61 @@ GZ3D.Gui.prototype.init = function()
         }
       }
   );
+
+  guiEvents.on('setTreeSelected', function (object)
+      {
+        if (isWideScreen())
+        {
+          guiEvents.emit('openTab', 'treeMenu');
+        }
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          if (modelStats[i].name === object)
+          {
+            $('#modelsTree').collapsible({collapsed: false});
+            modelStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            modelStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          if (lightStats[i].name === object)
+          {
+            $('#lightsTree').collapsible({collapsed: false});
+            lightStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            lightStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('setTreeDeselected', function ()
+      {
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          modelStats[i].selected = 'unselectedTreeItem';
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          lightStats[i].selected = 'unselectedTreeItem';
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('selectEntity', function (name)
+      {
+        var object = that.scene.getByName(name);
+        that.scene.selectEntity(object);
+      }
+  );
 };
 
 /**
@@ -993,4 +1062,154 @@ GZ3D.Gui.prototype.setRealTime = function(realTime)
 GZ3D.Gui.prototype.setSimTime = function(simTime)
 {
   $('.sim-time-value').text(simTime);
+};
+
+/**
+ * Update scene stats on property panel
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setSceneStats = function(stats)
+{
+  $('#sceneName').text('Name: '+stats.name);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var thumbnail = this.findModelThumbnail(name);
+
+    var model = $.grep(modelStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (model.length === 0)
+    {
+      modelStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < modelStats.length; ++i)
+    {
+      if (modelStats[i].name === name)
+      {
+        modelStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+var lightStats = [];
+/**
+ * Update light stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setLightStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var type = stats.type;
+
+    var thumbnail;
+    switch(type)
+    {
+      case 2:
+          thumbnail = 'style/images/spotlight.png';
+          break;
+      case 3:
+          thumbnail = 'style/images/directionallight.png';
+          break;
+      default:
+          thumbnail = 'style/images/pointlight.png';
+    }
+
+    var light = $.grep(lightStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (light.length === 0)
+    {
+      lightStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < lightStats.length; ++i)
+    {
+      if (lightStats[i].name === name)
+      {
+        lightStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+/**
+ * Find thumbnail
+ * @param {} instanceName
+ */
+GZ3D.Gui.prototype.findModelThumbnail = function(instanceName)
+{
+  for(var i = 0; i < modelList.length; ++i)
+  {
+    for(var j = 0; j < modelList[i].models.length; ++j)
+    {
+      var path = modelList[i].models[j].modelPath;
+      if(instanceName.indexOf(path) >= 0)
+      {
+        return '/assets/'+path+'/thumbnails/0.png';
+      }
+    }
+  }
+  if(instanceName.indexOf('box') >= 0)
+  {
+    return 'style/images/box.png';
+  }
+  if(instanceName.indexOf('sphere') >= 0)
+  {
+    return 'style/images/sphere.png';
+  }
+  if(instanceName.indexOf('cylinder') >= 0)
+  {
+    return 'style/images/cylinder.png';
+  }
+  return 'style/images/box.png';
+};
+
+/**
+ * Update model stats
+ */
+GZ3D.Gui.prototype.updateStats = function()
+{
+  // Click triggers updateStats, there must be a better way to do it
+  // actually even without defining $scope.updateStats it works :O
+  $('#clickToUpdate').click();
 };

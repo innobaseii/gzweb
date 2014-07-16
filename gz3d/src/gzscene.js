@@ -304,7 +304,7 @@ GZ3D.Scene.prototype.onPointerDown = function(event)
     {
       if (mainPointer && model.parent === this.scene)
       {
-        this.attachManipulator(model, this.manipulationMode);
+        this.selectEntity(model);
       }
     }
     // Manipulator pickers, for mouse
@@ -1460,7 +1460,7 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     {
       this.emitter.emit('poseChanged', this.modelManipulator.object);
     }
-    this.hideBoundingBox();
+    this.selectEntity(null);
 
     this.modelManipulator.detach();
     this.scene.remove(this.modelManipulator.gizmo);
@@ -1472,7 +1472,7 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     // model was selected during view mode
     if (this.selectedEntity)
     {
-      this.attachManipulator(this.selectedEntity, mode);
+      this.selectEntity(this.selectedEntity);
     }
   }
 
@@ -1522,13 +1522,6 @@ GZ3D.Scene.prototype.attachManipulator = function(model,mode)
   {
     this.emitter.emit('poseChanged', this.modelManipulator.object);
   }
-  if (this.modelManipulator.object !== model)
-  {
-    this.hideBoundingBox();
-  }
-
-  this.selectedEntity = model;
-  this.showBoundingBox(model);
 
   if (mode !== 'view')
   {
@@ -1568,7 +1561,7 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
       && this.modelManipulator.pickerNames.indexOf(model.name) === -1)
   {
     this.radialMenu.show(event,model);
-    this.showBoundingBox(model);
+    this.selectEntity(model);
   }
 };
 
@@ -1578,6 +1571,11 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
  */
 GZ3D.Scene.prototype.showBoundingBox = function(model)
 {
+  if (typeof model === 'string')
+  {
+    model = this.scene.getObjectByName(model);
+  }
+
   if (this.boundingBox.visible)
   {
     if (this.boundingBox.parent === model)
@@ -1587,7 +1585,6 @@ GZ3D.Scene.prototype.showBoundingBox = function(model)
     else
     {
       this.hideBoundingBox();
-      this.selectedEntity = model;
     }
   }
   var box = new THREE.Box3();
@@ -1666,7 +1663,7 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
     this.boundingBox.parent.remove(this.boundingBox);
   }
   this.boundingBox.visible = false;
-  this.selectedEntity = null;
+  //this.selectEntity(null);
 };
 
 /**
@@ -1814,4 +1811,28 @@ GZ3D.Scene.prototype.getParentByPartialName = function(object, name)
     parent = parent.parent;
   }
   return null;
+};
+
+/**
+ * Select entity
+ * @param {} object / name
+ */
+GZ3D.Scene.prototype.selectEntity = function(object)
+{
+  if (object)
+  {
+    if (object !== this.selectedEntity)
+    {
+      this.showBoundingBox(object);
+      this.selectedEntity = object;
+      guiEvents.emit('setTreeSelected', object.name);
+    }
+    this.attachManipulator(object, this.manipulationMode);
+  }
+  else
+  {
+    this.hideBoundingBox();
+    this.selectedEntity = null;
+    guiEvents.emit('setTreeDeselected');
+  }
 };

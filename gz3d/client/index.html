@@ -255,12 +255,52 @@
             </ul>
           </div>
         </div>
+        <!-- world tree -->
+        <div id="treeMenu" class="leftPanels ui-overlay-shadow" ng-controller="treeControl">
+          <div class="panelTitle">
+            <h3>World Tree</h3>
+            <img src="style/images/close.png">
+          </div>
+          <div class="panelContent">
+            <a id="clickToUpdate" ng-click="updateStats()"></a>
+            <ul>
+              <!-- scene -->
+              <div data-role="collapsible" data-inset="false" data-iconpos="left" data-collapsed-icon="carat-r" data-expanded-icon="carat-d">
+                <h3><span class="collapsible_header">Scene</span></h3>
+                <ul data-role="listview">
+                  <div id="sceneName">Name: aaa</div>
+                </ul>
+              </div>
+              <!-- models -->
+              <div id="modelsTree" data-role="collapsible" data-inset="false" data-iconpos="left" data-collapsed-icon="carat-r" data-expanded-icon="carat-d">
+                <h3><span class="collapsible_header">Models</span></h3>
+                <ul data-role="listview">
+                  <div class="treeItem {{model.selected}}" ng-repeat="model in models" ng-click="selectEntity(model.name)" title="{{model.name}}">
+                    <div class="treeItemImg"><img src="{{model.thumbnail}}"></div>
+                    <div class="treeItemTitle">{{model.name}}</div><br>
+                  </div>
+                </ul>
+              </div>
+              <!-- lights -->
+              <div id="lightsTree" data-role="collapsible" data-inset="false" data-iconpos="left" data-collapsed-icon="carat-r" data-expanded-icon="carat-d">
+                <h3><span class="collapsible_header">Lights</span></h3>
+                <ul data-role="listview">
+                  <div class="treeItem {{light.selected}}" ng-repeat="light in lights" ng-click="selectEntity(light.name)" title="{{light.name}}">
+                    <div class="treeItemImg"><img src="{{light.thumbnail}}"></div>
+                    <div class="treeItemTitle">{{light.name}}</div><br>
+                  </div>
+                </ul>
+              </div>
+            </ul>
+          </div>
+        </div>
       </div>
       <!-- left panel -->
 
       <!-- tabs -->
       <a href="#" id="mainMenuTab" class="tab"><img src="style/images/bars.png" title="Menu"></a>
       <a href="#" id="insertMenuTab" class="tab"><img src="style/images/insert.png" title="Insert"></a>
+      <a href="#" id="treeMenuTab" class="tab"><img src="style/images/tree.png" title="World Tree"></a>
       <!-- tabs -->
 
       <!-- header -->
@@ -272,7 +312,7 @@
         <a href="#" data-role="button" id="clock" class="header-button" class="touch-only" data-rel="popup"><span><img src="style/images/clock.png"></span></a>
       </fieldset>
 
-      <fieldset id="clock-mouse" class="mouse-only">
+      <fieldset id="clock-mouse">
         <p style='margin:0px;margin-left:0.2em'>Real Time: <span class='real-time-value'>00 00:00:00</span></p>
         <p style='margin:0px;margin-left:0.45em'>Sim Time: <span class='sim-time-value'>00 00:00:00</span></p>
       </fieldset>
@@ -304,7 +344,7 @@
       </fieldset>
 
       <fieldset id="pointlight-header-fieldset">
-        <a href="#" data-role="button" id="header-insert-pointlight" class="header-button" class="mouse-only"><span><img style="height:1.45em;" src="style/images/pointlight.png" title="Insert point light"></span></a>
+        <a href="#" data-role="button" id="header-insert-pointlight" class="header-button"><span><img style="height:1.45em;" src="style/images/pointlight.png" title="Insert point light"></span></a>
       </fieldset>
       <fieldset id="spotlight-header-fieldset">
         <a href="#" data-role="button" id="header-insert-spotlight" class="header-button" class="mouse-only"><span><img src="style/images/spotlight.png" title="Insert spot light"></span></a>
