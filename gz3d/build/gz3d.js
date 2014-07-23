@@ -4,6 +4,7 @@ var GZ3D = GZ3D || {
 
 
 /*global $:false */
+/*global angular*/
 
 var guiEvents = new EventEmitter2({ verbose: true });
 
@@ -366,19 +367,27 @@ $(function()
         });
   }
 
+  var lastOpenMenu = {insertMenu: 'insertMenu', treeMenu: 'treeMenu'};
   $('.tab').click(function()
       {
         var idTab = $(this).attr('id');
         var idMenu = idTab.substring(0,idTab.indexOf('Tab'));
 
-        if($('#'+idMenu).is(':visible')  ||
-           $('[id^="'+idMenu+'-"]').is(':visible'))
+        if($('#'+idMenu).is(':visible'))
         {
+          lastOpenMenu[idMenu] = idMenu;
+          guiEvents.emit('closeTabs', true);
+        }
+        else if ($('[id^="'+idMenu+'-"]').is(':visible'))
+        {
+          var id = $('[id^="'+idMenu+'-"]:visible').attr('id');
+          lastOpenMenu[idMenu] = id;
           guiEvents.emit('closeTabs', true);
         }
         else
         {
-          guiEvents.emit('openTab',idMenu);
+          var menu = lastOpenMenu[idMenu] ? lastOpenMenu[idMenu] : idMenu;
+          guiEvents.emit('openTab', menu);
         }
       });
 
@@ -390,8 +399,10 @@ $(function()
   // Only for insert for now
   $('.panelSubTitle').click(function()
       {
-        $('.insertCategory').hide();
-        $('#insertMenu').show();
+        var id = $('.leftPanels:visible').attr('id');
+        id = id.substring(0,id.indexOf('-'));
+        $('.leftPanels').hide();
+        $('#'+id).show();
       });
 
   $('#view-mode').click(function()
@@ -513,24 +524,6 @@ $(function()
   });
 });
 
-// Insert menu
-function insertControl($scope)
-{
-  $scope.categories = modelList;
-
-  $scope.openCategory = function(category)
-  {
-    $('#insertMenu').hide();
-    var categoryID = 'insertMenu-'+category;
-    $('#' + categoryID).show();
-  };
-
-  $scope.spawnEntity = function(path)
-  {
-    guiEvents.emit('spawn_entity_start', path);
-  };
-}
-
 function getNameFromPath(path)
 {
   if(path === 'box')
@@ -569,6 +562,104 @@ function getNameFromPath(path)
     }
   }
 }
+
+// World tree
+var gzangular = angular.module('gzangular',[]);
+// add ng-right-click
+gzangular.directive('ngRightClick', function($parse)
+{
+  return function(scope, element, attrs)
+      {
+        var fn = $parse(attrs.ngRightClick);
+        element.bind('contextmenu', function(event)
+            {
+              scope.$apply(function()
+                  {
+                    event.preventDefault();
+                    fn(scope, {$event:event});
+                  });
+            });
+      };
+});
+
+gzangular.controller('treeControl', ['$scope', function($scope)
+{
+  $scope.models = modelStats;
+
+  $scope.updateStats = function()
+  {
+    $scope.models = modelStats;
+    $scope.lights = lightStats;
+    if (!$scope.$$phase)
+    {
+      $scope.$apply();
+    }
+  };
+
+  $scope.selectEntity = function (name)
+  {
+    $('#model-popup').popup('close');
+    guiEvents.emit('selectEntity', name);
+
+    $('#treeMenu').hide();
+    $('#propertyPanel-'+name).show();
+  };
+
+  $scope.openEntityMenu = function (event, name)
+  {
+    $('#model-popup').popup('close');
+    guiEvents.emit('openEntityPopup', event, name);
+  };
+
+  $scope.closePanels = function ()
+  {
+    guiEvents.emit('closeTabs', true);
+  };
+
+  $scope.backToTree = function ()
+  {
+    $('.leftPanels').hide();
+    $('#treeMenu').show();
+  };
+
+  $scope.expandProperty = function (property, model)
+  {
+    var idContent = '#expandable-' + property + '-' + model;
+    var idHeader = '#expand-' + property + '-' + model;
+    if ($(idContent).is(':visible'))
+    {
+      $(idContent).hide();
+      $(idHeader+' img').css('transform','rotate(0deg)')
+                        .css('-webkit-transform','rotate(0deg)')
+                        .css('-ms-transform','rotate(0deg)');
+    }
+    else
+    {
+      $(idContent).show();
+      $(idHeader+' img').css('transform','rotate(90deg)')
+                        .css('-webkit-transform','rotate(90deg)')
+                        .css('-ms-transform','rotate(90deg)');
+    }
+  };
+}]);
+
+// Insert menu
+gzangular.controller('insertControl', ['$scope', function($scope)
+{
+  $scope.categories = modelList;
+
+  $scope.openCategory = function(category)
+  {
+    $('#insertMenu').hide();
+    var categoryID = 'insertMenu-'+category;
+    $('#' + categoryID).show();
+  };
+
+  $scope.spawnEntity = function(path)
+  {
+    guiEvents.emit('spawn_entity_start', path);
+  };
+}]);
 
 
 /**
@@ -783,12 +874,12 @@ GZ3D.Gui.prototype.init = function()
                 }
                 else if (type === 'transparent')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','transparent');
                 }
                 else if (type === 'wireframe')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','wireframe');
                 }
 
@@ -862,43 +953,7 @@ GZ3D.Gui.prototype.init = function()
       {
         that.scene.onRightClick(event, function(entity)
             {
-              that.scene.selectedEntity = entity;
-              that.scene.showBoundingBox(entity);
-              $('.ui-popup').popup('close');
-
-              if (entity.children[0] instanceof THREE.Light)
-              {
-                $('#view-transparent').css('visibility','collapse');
-                $('#view-wireframe').css('visibility','collapse');
-                $('#model-popup').popup('open',
-                  {x: event.clientX + emUnits(6),
-                   y: event.clientY + emUnits(-5)});
-              }
-              else
-              {
-                if (that.scene.selectedEntity.viewAs === 'transparent')
-                {
-                  $('#view-transparent').buttonMarkup({icon: 'check'});
-                }
-                else
-                {
-                  $('#view-transparent').buttonMarkup({icon: 'false'});
-                }
-
-                if (that.scene.selectedEntity.viewAs === 'wireframe')
-                {
-                  $('#view-wireframe').buttonMarkup({icon: 'check'});
-                }
-                else
-                {
-                  $('#view-wireframe').buttonMarkup({icon: 'false'});
-                }
-                $('#view-transparent').css('visibility','visible');
-                $('#view-wireframe').css('visibility','visible');
-                $('#model-popup').popup('open',
-                  {x: event.clientX + emUnits(6),
-                   y: event.clientY + emUnits(0)});
-              }
+              that.openEntityPopup(event, entity);
             });
       }
   );
@@ -906,7 +961,7 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('set_view_as', function (viewAs)
       {
         that.scene.setViewAs(that.scene.selectedEntity, viewAs);
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -915,7 +970,7 @@ GZ3D.Gui.prototype.init = function()
         that.emitter.emit('deleteEntity',that.scene.selectedEntity);
         guiEvents.emit('notification_popup','Model deleted');
         $('#model-popup').popup('close');
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -946,7 +1001,7 @@ GZ3D.Gui.prototype.init = function()
         }
 
         $('.tab').css('border-left', '2em solid #2a2a2a');
-        $('#'+id+'Tab').css('border-left', '2em solid #aaaaaa');
+        $('#'+id+'Tab').css('border-left', '2em solid #22aadd');
       }
   );
 
@@ -959,6 +1014,68 @@ GZ3D.Gui.prototype.init = function()
           $('.tab').css('left', '0em');
           $('.tab').css('border-left', '2em solid #2a2a2a');
         }
+      }
+  );
+
+  guiEvents.on('setTreeSelected', function (object)
+      {
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          if (modelStats[i].name === object)
+          {
+            $('#modelsTree').collapsible({collapsed: false});
+            modelStats[i].selected = 'selectedTreeItem';
+            if (isWideScreen())
+            {
+              guiEvents.emit('openTab', 'propertyPanel-'+object);
+            }
+          }
+          else
+          {
+            modelStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          if (lightStats[i].name === object)
+          {
+            $('#lightsTree').collapsible({collapsed: false});
+            lightStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            lightStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('setTreeDeselected', function ()
+      {
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          modelStats[i].selected = 'unselectedTreeItem';
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          lightStats[i].selected = 'unselectedTreeItem';
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('selectEntity', function (name)
+      {
+        var object = that.scene.getByName(name);
+        that.scene.selectEntity(object);
+      }
+  );
+
+  guiEvents.on('openEntityPopup', function (event, name)
+      {
+        var object = that.scene.getByName(name);
+        that.openEntityPopup(event, object);
       }
   );
 };
@@ -998,6 +1115,222 @@ GZ3D.Gui.prototype.setRealTime = function(realTime)
 GZ3D.Gui.prototype.setSimTime = function(simTime)
 {
   $('.sim-time-value').text(simTime);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var model = $.grep(modelStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    var quaternions, RPY, orientation;
+
+    // New model
+    if (model.length === 0)
+    {
+      var thumbnail = this.findModelThumbnail(name);
+
+      quaternions = new THREE.Quaternion(stats.pose.orientation.x,
+          stats.pose.orientation.y, stats.pose.orientation.z,
+          stats.pose.orientation.w);
+
+      RPY = new THREE.Euler();
+      RPY.setFromQuaternion(quaternions);
+
+      orientation = {roll: RPY._x, pitch: RPY._y, yaw: RPY._z};
+
+      modelStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem',
+            is_static: stats.is_static,
+            position: stats.pose.position,
+            orientation: orientation
+          });
+    }
+    else
+    {
+      if (stats.pose)
+      {
+        quaternions = new THREE.Quaternion(stats.pose.orientation.x,
+            stats.pose.orientation.y, stats.pose.orientation.z,
+            stats.pose.orientation.w);
+
+        RPY = new THREE.Euler();
+        RPY.setFromQuaternion(quaternions);
+
+        orientation = {roll: RPY._x, pitch: RPY._y, yaw: RPY._z};
+
+        model[0].position = stats.pose.position;
+        model[0].orientation = orientation;
+      }
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < modelStats.length; ++i)
+    {
+      if (modelStats[i].name === name)
+      {
+        modelStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+var lightStats = [];
+/**
+ * Update light stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setLightStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var type = stats.type;
+
+    var thumbnail;
+    switch(type)
+    {
+      case 2:
+          thumbnail = 'style/images/spotlight.png';
+          break;
+      case 3:
+          thumbnail = 'style/images/directionallight.png';
+          break;
+      default:
+          thumbnail = 'style/images/pointlight.png';
+    }
+
+    var light = $.grep(lightStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (light.length === 0)
+    {
+      lightStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < lightStats.length; ++i)
+    {
+      if (lightStats[i].name === name)
+      {
+        lightStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+/**
+ * Find thumbnail
+ * @param {} instanceName
+ */
+GZ3D.Gui.prototype.findModelThumbnail = function(instanceName)
+{
+  for(var i = 0; i < modelList.length; ++i)
+  {
+    for(var j = 0; j < modelList[i].models.length; ++j)
+    {
+      var path = modelList[i].models[j].modelPath;
+      if(instanceName.indexOf(path) >= 0)
+      {
+        return '/assets/'+path+'/thumbnails/0.png';
+      }
+    }
+  }
+  if(instanceName.indexOf('box') >= 0)
+  {
+    return 'style/images/box.png';
+  }
+  if(instanceName.indexOf('sphere') >= 0)
+  {
+    return 'style/images/sphere.png';
+  }
+  if(instanceName.indexOf('cylinder') >= 0)
+  {
+    return 'style/images/cylinder.png';
+  }
+  return 'style/images/box.png';
+};
+
+/**
+ * Update model stats
+ */
+GZ3D.Gui.prototype.updateStats = function()
+{
+  var tree = angular.element($('#treeMenu')).scope();
+  tree.updateStats();
+};
+
+/**
+ * Open entity (model/light) context menu
+ * @param {THREE.Object3D} entity
+ */
+GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
+{
+  this.scene.selectEntity(entity);
+  $('.ui-popup').popup('close');
+
+  if (entity.children[0] instanceof THREE.Light)
+  {
+    $('#view-transparent').css('visibility','collapse');
+    $('#view-wireframe').css('visibility','collapse');
+    $('#model-popup').popup('open',
+      {x: event.clientX + emUnits(6),
+       y: event.clientY + emUnits(-5)});
+  }
+  else
+  {
+    if (this.scene.selectedEntity.viewAs === 'transparent')
+    {
+      $('#view-transparent').buttonMarkup({icon: 'check'});
+    }
+    else
+    {
+      $('#view-transparent').buttonMarkup({icon: 'false'});
+    }
+
+    if (this.scene.selectedEntity.viewAs === 'wireframe')
+    {
+      $('#view-wireframe').buttonMarkup({icon: 'check'});
+    }
+    else
+    {
+      $('#view-wireframe').buttonMarkup({icon: 'false'});
+    }
+    $('#view-transparent').css('visibility','visible');
+    $('#view-wireframe').css('visibility','visible');
+    $('#model-popup').popup('open',
+      {x: event.clientX + emUnits(6),
+       y: event.clientY + emUnits(0)});
+  }
 };
 
 //var GAZEBO_MODEL_DATABASE_URI='http://gazebosim.org/models';
@@ -1102,6 +1435,7 @@ GZ3D.GZIface.prototype.onConnected = function()
       var light = message.light[i];
       var lightObj = this.createLightFromMsg(light);
       this.scene.add(lightObj);
+      this.gui.setLightStats(light, 'update');
     }
 
     for (var j = 0; j < message.model.length; ++j)
@@ -1109,6 +1443,7 @@ GZ3D.GZIface.prototype.onConnected = function()
       var model = message.model[j];
       var modelObj = this.createModelFromMsg(model);
       this.scene.add(modelObj);
+      this.gui.setModelStats(model, 'update');
     }
 
     this.sceneTopic.unsubscribe();
@@ -1148,6 +1483,14 @@ GZ3D.GZIface.prototype.onConnected = function()
       var entity = this.scene.getByName(message.data);
       if (entity)
       {
+        if (entity.children[0] instanceof THREE.Light)
+        {
+          this.gui.setLightStats({name: message.data}, 'delete');
+        }
+        else
+        {
+          this.gui.setModelStats({name: message.data}, 'delete');
+        }
         this.scene.remove(entity);
       }
     }
@@ -1194,6 +1537,7 @@ GZ3D.GZIface.prototype.onConnected = function()
         i++;
       }
     }
+    this.gui.setModelStats(message, 'update');
   };
 
   modelInfoTopic.subscribe(modelUpdate.bind(this));
@@ -1253,16 +1597,17 @@ GZ3D.GZIface.prototype.onConnected = function()
     messageType : 'light',
   });
 
-  var ligthtUpdate = function(message)
+  var lightUpdate = function(message)
   {
     if (!this.scene.getByName(message.name))
     {
       var lightObj = this.createLightFromMsg(message);
       this.scene.add(lightObj);
+      this.gui.setLightStats(message, 'update');
     }
   };
 
-  lightTopic.subscribe(ligthtUpdate.bind(this));
+  lightTopic.subscribe(lightUpdate.bind(this));
 
 
   // heightmap
@@ -4049,7 +4394,7 @@ GZ3D.Scene.prototype.onPointerDown = function(event)
     {
       if (mainPointer && model.parent === this.scene)
       {
-        this.attachManipulator(model, this.manipulationMode);
+        this.selectEntity(model);
       }
     }
     // Manipulator pickers, for mouse
@@ -5358,10 +5703,7 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     {
       this.emitter.emit('poseChanged', this.modelManipulator.object);
     }
-    this.hideBoundingBox();
-
-    this.modelManipulator.detach();
-    this.scene.remove(this.modelManipulator.gizmo);
+    this.selectEntity(null);
   }
   else
   {
@@ -5370,7 +5712,7 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     // model was selected during view mode
     if (this.selectedEntity)
     {
-      this.attachManipulator(this.selectedEntity, mode);
+      this.selectEntity(this.selectedEntity);
     }
   }
 
@@ -5420,13 +5762,6 @@ GZ3D.Scene.prototype.attachManipulator = function(model,mode)
   {
     this.emitter.emit('poseChanged', this.modelManipulator.object);
   }
-  if (this.modelManipulator.object !== model)
-  {
-    this.hideBoundingBox();
-  }
-
-  this.selectedEntity = model;
-  this.showBoundingBox(model);
 
   if (mode !== 'view')
   {
@@ -5466,7 +5801,7 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
       && this.modelManipulator.pickerNames.indexOf(model.name) === -1)
   {
     this.radialMenu.show(event,model);
-    this.showBoundingBox(model);
+    this.selectEntity(model);
   }
 };
 
@@ -5476,6 +5811,11 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
  */
 GZ3D.Scene.prototype.showBoundingBox = function(model)
 {
+  if (typeof model === 'string')
+  {
+    model = this.scene.getObjectByName(model);
+  }
+
   if (this.boundingBox.visible)
   {
     if (this.boundingBox.parent === model)
@@ -5485,7 +5825,6 @@ GZ3D.Scene.prototype.showBoundingBox = function(model)
     else
     {
       this.hideBoundingBox();
-      this.selectedEntity = model;
     }
   }
   var box = new THREE.Box3();
@@ -5564,7 +5903,6 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
     this.boundingBox.parent.remove(this.boundingBox);
   }
   this.boundingBox.visible = false;
-  this.selectedEntity = null;
 };
 
 /**
@@ -5574,16 +5912,13 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
  */
 GZ3D.Scene.prototype.onRightClick = function(event, callback)
 {
-  if(this.manipulationMode === 'view')
-  {
-    var pos = new THREE.Vector2(event.clientX, event.clientY);
-    var model = this.getRayCastModel(pos, new THREE.Vector3());
+  var pos = new THREE.Vector2(event.clientX, event.clientY);
+  var model = this.getRayCastModel(pos, new THREE.Vector3());
 
-    if(model && model.name !== '' && model.name !== 'plane' &&
-        this.modelManipulator.pickerNames.indexOf(model.name) === -1)
-    {
-      callback(model);
-    }
+  if(model && model.name !== '' && model.name !== 'plane' &&
+      this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+  {
+    callback(model);
   }
 };
 
@@ -5709,6 +6044,35 @@ GZ3D.Scene.prototype.getParentByPartialName = function(object, name)
     parent = parent.parent;
   }
   return null;
+};
+
+/**
+ * Select entity
+ * @param {} object / name
+ */
+GZ3D.Scene.prototype.selectEntity = function(object)
+{
+  if (object)
+  {
+    if (object !== this.selectedEntity)
+    {
+      this.showBoundingBox(object);
+      this.selectedEntity = object;
+      guiEvents.emit('setTreeSelected', object.name);
+    }
+    this.attachManipulator(object, this.manipulationMode);
+  }
+  else
+  {
+    if (this.modelManipulator.object)
+    {
+      this.modelManipulator.detach();
+      this.scene.remove(this.modelManipulator.gizmo);
+    }
+    this.hideBoundingBox();
+    this.selectedEntity = null;
+    guiEvents.emit('setTreeDeselected');
+  }
 };
 
 /**
