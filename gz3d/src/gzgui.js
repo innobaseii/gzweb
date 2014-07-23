@@ -1,4 +1,5 @@
 /*global $:false */
+/*global angular*/
 
 var guiEvents = new EventEmitter2({ verbose: true });
 
@@ -361,19 +362,27 @@ $(function()
         });
   }
 
+  var lastOpenMenu = {insertMenu: 'insertMenu', treeMenu: 'treeMenu'};
   $('.tab').click(function()
       {
         var idTab = $(this).attr('id');
         var idMenu = idTab.substring(0,idTab.indexOf('Tab'));
 
-        if($('#'+idMenu).is(':visible')  ||
-           $('[id^="'+idMenu+'-"]').is(':visible'))
+        if($('#'+idMenu).is(':visible'))
         {
+          lastOpenMenu[idMenu] = idMenu;
+          guiEvents.emit('closeTabs', true);
+        }
+        else if ($('[id^="'+idMenu+'-"]').is(':visible'))
+        {
+          var id = $('[id^="'+idMenu+'-"]:visible').attr('id');
+          lastOpenMenu[idMenu] = id;
           guiEvents.emit('closeTabs', true);
         }
         else
         {
-          guiEvents.emit('openTab',idMenu);
+          var menu = lastOpenMenu[idMenu] ? lastOpenMenu[idMenu] : idMenu;
+          guiEvents.emit('openTab', menu);
         }
       });
 
@@ -508,24 +517,6 @@ $(function()
   });
 });
 
-// Insert menu
-function insertControl($scope)
-{
-  $scope.categories = modelList;
-
-  $scope.openCategory = function(category)
-  {
-    $('#insertMenu').hide();
-    var categoryID = 'insertMenu-'+category;
-    $('#' + categoryID).show();
-  };
-
-  $scope.spawnEntity = function(path)
-  {
-    guiEvents.emit('spawn_entity_start', path);
-  };
-}
-
 function getNameFromPath(path)
 {
   if(path === 'box')
@@ -564,6 +555,70 @@ function getNameFromPath(path)
     }
   }
 }
+
+// World tree
+var gzangular = angular.module('gzangular',[]);
+// add ng-right-click
+gzangular.directive('ngRightClick', function($parse)
+{
+  return function(scope, element, attrs)
+      {
+        var fn = $parse(attrs.ngRightClick);
+        element.bind('contextmenu', function(event)
+            {
+              scope.$apply(function()
+                  {
+                    event.preventDefault();
+                    fn(scope, {$event:event});
+                  });
+            });
+      };
+});
+
+gzangular.controller('treeControl', ['$scope', function($scope)
+{
+  $scope.models = modelStats;
+
+  $scope.updateStats = function()
+  {
+    $scope.models = modelStats;
+    $scope.lights = lightStats;
+    if (!$scope.$$phase)
+    {
+      $scope.$apply();
+    }
+  };
+
+  $scope.selectEntity = function (name)
+  {
+    $('#model-popup').popup('close');
+    guiEvents.emit('selectEntity', name);
+  };
+
+  $scope.openEntityMenu = function (event, name)
+  {
+    $('#model-popup').popup('close');
+    guiEvents.emit('openEntityPopup', event, name);
+  };
+}]);
+
+// Insert menu
+gzangular.controller('insertControl', ['$scope', function($scope)
+{
+  $scope.categories = modelList;
+
+  $scope.openCategory = function(category)
+  {
+    $('#insertMenu').hide();
+    var categoryID = 'insertMenu-'+category;
+    $('#' + categoryID).show();
+  };
+
+  $scope.spawnEntity = function(path)
+  {
+    guiEvents.emit('spawn_entity_start', path);
+  };
+}]);
 
 
 /**
@@ -778,12 +833,12 @@ GZ3D.Gui.prototype.init = function()
                 }
                 else if (type === 'transparent')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','transparent');
                 }
                 else if (type === 'wireframe')
                 {
-                  that.scene.selectedEntity = entity;
+                  that.scene.selectEntity(entity);
                   guiEvents.emit('set_view_as','wireframe');
                 }
 
@@ -857,43 +912,7 @@ GZ3D.Gui.prototype.init = function()
       {
         that.scene.onRightClick(event, function(entity)
             {
-              that.scene.selectedEntity = entity;
-              that.scene.showBoundingBox(entity);
-              $('.ui-popup').popup('close');
-
-              if (entity.children[0] instanceof THREE.Light)
-              {
-                $('#view-transparent').css('visibility','collapse');
-                $('#view-wireframe').css('visibility','collapse');
-                $('#model-popup').popup('open',
-                  {x: event.clientX + emUnits(6),
-                   y: event.clientY + emUnits(-5)});
-              }
-              else
-              {
-                if (that.scene.selectedEntity.viewAs === 'transparent')
-                {
-                  $('#view-transparent').buttonMarkup({icon: 'check'});
-                }
-                else
-                {
-                  $('#view-transparent').buttonMarkup({icon: 'false'});
-                }
-
-                if (that.scene.selectedEntity.viewAs === 'wireframe')
-                {
-                  $('#view-wireframe').buttonMarkup({icon: 'check'});
-                }
-                else
-                {
-                  $('#view-wireframe').buttonMarkup({icon: 'false'});
-                }
-                $('#view-transparent').css('visibility','visible');
-                $('#view-wireframe').css('visibility','visible');
-                $('#model-popup').popup('open',
-                  {x: event.clientX + emUnits(6),
-                   y: event.clientY + emUnits(0)});
-              }
+              that.openEntityPopup(event, entity);
             });
       }
   );
@@ -901,7 +920,7 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('set_view_as', function (viewAs)
       {
         that.scene.setViewAs(that.scene.selectedEntity, viewAs);
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -910,7 +929,7 @@ GZ3D.Gui.prototype.init = function()
         that.emitter.emit('deleteEntity',that.scene.selectedEntity);
         guiEvents.emit('notification_popup','Model deleted');
         $('#model-popup').popup('close');
-        that.scene.selectedEntity = null;
+        that.scene.selectEntity(null);
       }
   );
 
@@ -941,7 +960,7 @@ GZ3D.Gui.prototype.init = function()
         }
 
         $('.tab').css('border-left', '2em solid #2a2a2a');
-        $('#'+id+'Tab').css('border-left', '2em solid #aaaaaa');
+        $('#'+id+'Tab').css('border-left', '2em solid #22aadd');
       }
   );
 
@@ -954,6 +973,68 @@ GZ3D.Gui.prototype.init = function()
           $('.tab').css('left', '0em');
           $('.tab').css('border-left', '2em solid #2a2a2a');
         }
+      }
+  );
+
+  guiEvents.on('setTreeSelected', function (object)
+      {
+        if (isWideScreen())
+        {
+          guiEvents.emit('openTab', 'treeMenu');
+        }
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          if (modelStats[i].name === object)
+          {
+            $('#modelsTree').collapsible({collapsed: false});
+            modelStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            modelStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          if (lightStats[i].name === object)
+          {
+            $('#lightsTree').collapsible({collapsed: false});
+            lightStats[i].selected = 'selectedTreeItem';
+          }
+          else
+          {
+            lightStats[i].selected = 'unselectedTreeItem';
+          }
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('setTreeDeselected', function ()
+      {
+        for (var i = 0; i < modelStats.length; ++i)
+        {
+          modelStats[i].selected = 'unselectedTreeItem';
+        }
+        for (i = 0; i < lightStats.length; ++i)
+        {
+          lightStats[i].selected = 'unselectedTreeItem';
+        }
+        that.updateStats();
+      }
+  );
+
+  guiEvents.on('selectEntity', function (name)
+      {
+        var object = that.scene.getByName(name);
+        that.scene.selectEntity(object);
+      }
+  );
+
+  guiEvents.on('openEntityPopup', function (event, name)
+      {
+        var object = that.scene.getByName(name);
+        that.openEntityPopup(event, object);
       }
   );
 };
@@ -993,4 +1074,188 @@ GZ3D.Gui.prototype.setRealTime = function(realTime)
 GZ3D.Gui.prototype.setSimTime = function(simTime)
 {
   $('.sim-time-value').text(simTime);
+};
+
+var modelStats = [];
+/**
+ * Update model stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setModelStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var thumbnail = this.findModelThumbnail(name);
+
+    var model = $.grep(modelStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (model.length === 0)
+    {
+      modelStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < modelStats.length; ++i)
+    {
+      if (modelStats[i].name === name)
+      {
+        modelStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+var lightStats = [];
+/**
+ * Update light stats on property panel
+ * @param {} stats
+ * @param {} action: update / delete
+ */
+GZ3D.Gui.prototype.setLightStats = function(stats, action)
+{
+  var name = stats.name;
+
+  if (action === 'update')
+  {
+    var type = stats.type;
+
+    var thumbnail;
+    switch(type)
+    {
+      case 2:
+          thumbnail = 'style/images/spotlight.png';
+          break;
+      case 3:
+          thumbnail = 'style/images/directionallight.png';
+          break;
+      default:
+          thumbnail = 'style/images/pointlight.png';
+    }
+
+    var light = $.grep(lightStats, function(e)
+        {
+          return e.name === name;
+        });
+
+    if (light.length === 0)
+    {
+      lightStats.push(
+          {
+            name: name,
+            thumbnail: thumbnail,
+            selected: 'unselectedTreeItem'
+          });
+    }
+  }
+  else if (action === 'delete')
+  {
+    for (var i = 0; i < lightStats.length; ++i)
+    {
+      if (lightStats[i].name === name)
+      {
+        lightStats.splice(i, 1);
+      }
+    }
+  }
+
+  this.updateStats();
+};
+
+/**
+ * Find thumbnail
+ * @param {} instanceName
+ */
+GZ3D.Gui.prototype.findModelThumbnail = function(instanceName)
+{
+  for(var i = 0; i < modelList.length; ++i)
+  {
+    for(var j = 0; j < modelList[i].models.length; ++j)
+    {
+      var path = modelList[i].models[j].modelPath;
+      if(instanceName.indexOf(path) >= 0)
+      {
+        return '/assets/'+path+'/thumbnails/0.png';
+      }
+    }
+  }
+  if(instanceName.indexOf('box') >= 0)
+  {
+    return 'style/images/box.png';
+  }
+  if(instanceName.indexOf('sphere') >= 0)
+  {
+    return 'style/images/sphere.png';
+  }
+  if(instanceName.indexOf('cylinder') >= 0)
+  {
+    return 'style/images/cylinder.png';
+  }
+  return 'style/images/box.png';
+};
+
+/**
+ * Update model stats
+ */
+GZ3D.Gui.prototype.updateStats = function()
+{
+  var tree = angular.element($('#treeMenu')).scope();
+  tree.updateStats();
+};
+
+/**
+ * Open entity (model/light) context menu
+ * @param {THREE.Object3D} entity
+ */
+GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
+{
+  this.scene.selectEntity(entity);
+  $('.ui-popup').popup('close');
+
+  if (entity.children[0] instanceof THREE.Light)
+  {
+    $('#view-transparent').css('visibility','collapse');
+    $('#view-wireframe').css('visibility','collapse');
+    $('#model-popup').popup('open',
+      {x: event.clientX + emUnits(6),
+       y: event.clientY + emUnits(-5)});
+  }
+  else
+  {
+    if (this.scene.selectedEntity.viewAs === 'transparent')
+    {
+      $('#view-transparent').buttonMarkup({icon: 'check'});
+    }
+    else
+    {
+      $('#view-transparent').buttonMarkup({icon: 'false'});
+    }
+
+    if (this.scene.selectedEntity.viewAs === 'wireframe')
+    {
+      $('#view-wireframe').buttonMarkup({icon: 'check'});
+    }
+    else
+    {
+      $('#view-wireframe').buttonMarkup({icon: 'false'});
+    }
+    $('#view-transparent').css('visibility','visible');
+    $('#view-wireframe').css('visibility','visible');
+    $('#model-popup').popup('open',
+      {x: event.clientX + emUnits(6),
+       y: event.clientY + emUnits(0)});
+  }
 };
