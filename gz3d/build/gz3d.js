@@ -179,7 +179,6 @@ $(function()
   // Toggle items
   $('#view-collisions').buttonMarkup({icon: 'false'});
   $('#snap-to-grid').buttonMarkup({icon: 'false'});
-  $('#open-tree-when-selected').buttonMarkup({icon: 'false'});
   $('#view-transparent').buttonMarkup({icon: 'false'});
   $('#view-wireframe').buttonMarkup({icon: 'false'});
   guiEvents.emit('toggle_notifications');
@@ -197,12 +196,9 @@ $(function()
     $('.collapsible_header').click();
   }
 
-  // Touch devices
+  // Clicks/taps// Touch devices
   if (isTouchDevice)
   {
-    $('.mouse-only')
-        .css('display','none');
-
     $('#play-header-fieldset')
         .css('position', 'absolute')
         .css('right', '13.6em')
@@ -215,17 +211,29 @@ $(function()
         .css('top', '0em')
         .css('z-index', '1000');
 
+    $('#clock-mouse')
+        .css('visibility','hidden');
+
     $('#mode-header-fieldset')
         .css('position', 'absolute')
         .css('right', '0.5em')
         .css('top', '0.15em')
         .css('z-index', '1000');
 
-    $('.gzGUI').touchstart(function(event){
+    $('#box-header-fieldset')
+        .css('visibility','hidden');
+
+    $('#sphere-header-fieldset')
+        .css('visibility','hidden');
+
+    $('#cylinder-header-fieldset')
+        .css('visibility','hidden');
+
+    $('#leftPanel').touchstart(function(event){
         guiEvents.emit('pointerOnMenu');
     });
 
-    $('.gzGUI').touchend(function(event){
+    $('#leftPanel').touchend(function(event){
         guiEvents.emit('pointerOffMenu');
     });
 
@@ -271,9 +279,6 @@ $(function()
   // Mouse devices
   else
   {
-    $('.touch-only')
-        .css('display','none');
-
     $('[id^="insert-entity-"]')
       .click(function(event) {
         var path = $(this).attr('id');
@@ -284,15 +289,18 @@ $(function()
         event.preventDefault();
       });
 
+    $('#clock-header-fieldset')
+        .css('visibility','hidden');
+
     $('#play-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '41.2em')
+        .css('right', '31.2em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#clock-mouse')
         .css('position', 'absolute')
-        .css('right', '29.0em')
+        .css('right', '19.4em')
         .css('top', '0.5em')
         .css('z-index', '100')
         .css('width', '11em')
@@ -303,51 +311,33 @@ $(function()
 
     $('#mode-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '24.4em')
+        .css('right', '12.4em')
         .css('top', '0.15em')
         .css('z-index', '1000');
 
     $('#box-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '15.5em')
+        .css('right', '6.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#sphere-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '12.5em')
+        .css('right', '3.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
     $('#cylinder-header-fieldset')
         .css('position', 'absolute')
-        .css('right', '9.5em')
-        .css('top', '0em')
-        .css('z-index', '1000');
-
-    $('#pointlight-header-fieldset')
-        .css('position', 'absolute')
-        .css('right', '6.5em')
-        .css('top', '0em')
-        .css('z-index', '1000');
-
-    $('#spotlight-header-fieldset')
-        .css('position', 'absolute')
-        .css('right', '3.5em')
-        .css('top', '0em')
-        .css('z-index', '1000');
-
-    $('#directionallight-header-fieldset')
-        .css('position', 'absolute')
         .css('right', '0.5em')
         .css('top', '0em')
         .css('z-index', '1000');
 
-    $('.gzGUI').mouseenter(function(event){
+    $('#leftPanel').mouseenter(function(event){
         guiEvents.emit('pointerOnMenu');
     });
 
-    $('.gzGUI').mouseleave(function(event){
+    $('#leftPanel').mouseleave(function(event){
         guiEvents.emit('pointerOffMenu');
     });
 
@@ -367,27 +357,24 @@ $(function()
         });
   }
 
-  var lastOpenMenu = {insertMenu: 'insertMenu', treeMenu: 'treeMenu'};
+  $('.header-button')
+      .css('float', 'left')
+      .css('height', '1.45em')
+      .css('padding', '0.65em');
+
   $('.tab').click(function()
       {
         var idTab = $(this).attr('id');
         var idMenu = idTab.substring(0,idTab.indexOf('Tab'));
 
-        if($('#'+idMenu).is(':visible'))
+        if($('#'+idMenu).is(':visible')  ||
+           $('[id^="'+idMenu+'-"]').is(':visible'))
         {
-          lastOpenMenu[idMenu] = idMenu;
-          guiEvents.emit('closeTabs', true);
-        }
-        else if ($('[id^="'+idMenu+'-"]').is(':visible'))
-        {
-          var id = $('[id^="'+idMenu+'-"]:visible').attr('id');
-          lastOpenMenu[idMenu] = id;
           guiEvents.emit('closeTabs', true);
         }
         else
         {
-          var menu = lastOpenMenu[idMenu] ? lastOpenMenu[idMenu] : idMenu;
-          guiEvents.emit('openTab', menu);
+          guiEvents.emit('openTab',idMenu);
         }
       });
 
@@ -415,15 +402,21 @@ $(function()
       {
         guiEvents.emit('manipulation_mode', 'rotate');
       });
-
-  $('[id^="header-insert-"]').click(function()
+  $('#box-header').click(function()
       {
-        var entity = $(this).attr('id');
-        entity = entity.substring(14); // after 'header-insert-'
         guiEvents.emit('closeTabs', false);
-        guiEvents.emit('spawn_entity_start', entity);
+        guiEvents.emit('spawn_entity_start', 'box');
       });
-
+  $('#sphere-header').click(function()
+      {
+        guiEvents.emit('closeTabs', false);
+        guiEvents.emit('spawn_entity_start', 'sphere');
+      });
+  $('#cylinder-header').click(function()
+      {
+        guiEvents.emit('closeTabs', false);
+        guiEvents.emit('spawn_entity_start', 'cylinder');
+      });
   $('#play').click(function()
       {
         if ( $('#playText').html().indexOf('Play') !== -1 )
@@ -477,10 +470,6 @@ $(function()
     guiEvents.emit('snap_to_grid');
     guiEvents.emit('closeTabs', false);
   });
-  $( '#open-tree-when-selected' ).click(function() {
-    guiEvents.emit('openTreeWhenSelected');
-    guiEvents.emit('closeTabs', false);
-  });
   $( '#toggle-notifications' ).click(function() {
     guiEvents.emit('toggle_notifications');
     guiEvents.emit('closeTabs', false);
@@ -526,93 +515,8 @@ $(function()
   });
 });
 
-function getNameFromPath(path)
-{
-  if(path === 'box')
-  {
-    return 'Box';
-  }
-  if(path === 'sphere')
-  {
-    return 'Sphere';
-  }
-  if(path === 'cylinder')
-  {
-    return 'Cylinder';
-  }
-  if(path === 'pointlight')
-  {
-    return 'Point Light';
-  }
-  if(path === 'spotlight')
-  {
-    return 'Spot Light';
-  }
-  if(path === 'directionallight')
-  {
-    return 'Directional Light';
-  }
-
-  for(var i = 0; i < modelList.length; ++i)
-  {
-    for(var j = 0; j < modelList[i].models.length; ++j)
-    {
-      if(modelList[i].models[j].modelPath === path)
-      {
-        return modelList[i].models[j].modelTitle;
-      }
-    }
-  }
-}
-
-// World tree
-var gzangular = angular.module('gzangular',[]);
-// add ng-right-click
-gzangular.directive('ngRightClick', function($parse)
-{
-  return function(scope, element, attrs)
-      {
-        var fn = $parse(attrs.ngRightClick);
-        element.bind('contextmenu', function(event)
-            {
-              scope.$apply(function()
-                  {
-                    event.preventDefault();
-                    fn(scope, {$event:event});
-                  });
-            });
-      };
-});
-
-gzangular.controller('treeControl', ['$scope', function($scope)
-{
-  $scope.models = modelStats;
-
-  $scope.updateStats = function()
-  {
-    $scope.models = modelStats;
-    $scope.lights = lightStats;
-    if (!$scope.$$phase)
-    {
-      $scope.$apply();
-    }
-  };
-
-  $scope.selectEntity = function (name)
-  {
-    $('#model-popup').popup('close');
-    guiEvents.emit('selectEntity', name);
-  };
-
-  $scope.openEntityMenu = function (event, name)
-  {
-    $('#model-popup').popup('close');
-    guiEvents.emit('openEntityPopup', event, name);
-  };
-}]);
-
 // Insert menu
-gzangular.controller('insertControl', ['$scope', function($scope)
+function insertControl($scope)
 {
   $scope.categories = modelList;
 
@@ -627,7 +531,34 @@ gzangular.controller('insertControl', ['$scope', function($scope)
   {
     guiEvents.emit('spawn_entity_start', path);
   };
-}]);
+}
+
+function getNameFromPath(path)
+{
+  if(path === 'box')
+  {
+    return 'Box';
+  }
+  if(path === 'sphere')
+  {
+    return 'Sphere';
+  }
+  if(path === 'cylinder')
+  {
+    return 'Cylinder';
+  }
+
+  for(var i = 0; i < modelList.length; ++i)
+  {
+    for(var j = 0; j < modelList[i].models.length; ++j)
+    {
+      if(modelList[i].models[j].modelPath === path)
+      {
+        return modelList[i].models[j].modelTitle;
+      }
+    }
+  }
+}
 
 
 /**
@@ -652,7 +583,6 @@ GZ3D.Gui.prototype.init = function()
   this.spawnState = null;
   this.longPressContainerState = null;
   this.showNotifications = false;
-  this.openTreeWhenSelected = false;
 
   var that = this;
 
@@ -771,30 +701,16 @@ GZ3D.Gui.prototype.init = function()
       }
   );
 
-  guiEvents.on('openTreeWhenSelected', function ()
-      {
-        this.openTreeWhenSelected = !this.openTreeWhenSelected;
-        if(!this.openTreeWhenSelected)
-        {
-          $('#open-tree-when-selected').buttonMarkup({icon: 'false'});
-        }
-        else
-        {
-          $('#open-tree-when-selected').buttonMarkup({icon: 'check'});
-        }
-      }
-  );
-
   guiEvents.on('toggle_notifications', function ()
       {
         this.showNotifications = !this.showNotifications;
         if(!this.showNotifications)
         {
-          $('#toggle-notifications').buttonMarkup({icon: 'false'});
+            $('#toggle-notifications').buttonMarkup({ icon: 'false' });
         }
         else
         {
-          $('#toggle-notifications').buttonMarkup({icon: 'check'});
+            $('#toggle-notifications').buttonMarkup({ icon: 'check' });
         }
       }
   );
@@ -857,12 +773,12 @@ GZ3D.Gui.prototype.init = function()
                 }
                 else if (type === 'transparent')
                 {
-                  that.scene.selectEntity(entity);
+                  that.scene.selectedEntity = entity;
                   guiEvents.emit('set_view_as','transparent');
                 }
                 else if (type === 'wireframe')
                 {
-                  that.scene.selectEntity(entity);
+                  that.scene.selectedEntity = entity;
                   guiEvents.emit('set_view_as','wireframe');
                 }
 
@@ -936,7 +852,30 @@ GZ3D.Gui.prototype.init = function()
       {
         that.scene.onRightClick(event, function(entity)
             {
-              that.openEntityPopup(event, entity);
+              that.scene.selectedEntity = entity;
+              that.scene.showBoundingBox(entity);
+              $('.ui-popup').popup('close');
+              if (that.scene.selectedEntity.viewAs === 'transparent')
+              {
+                $('#view-transparent').buttonMarkup({icon: 'check'});
+              }
+              else
+              {
+                $('#view-transparent').buttonMarkup({icon: 'false'});
+              }
+
+              if (that.scene.selectedEntity.viewAs === 'wireframe')
+              {
+                $('#view-wireframe').buttonMarkup({icon: 'check'});
+              }
+              else
+              {
+                $('#view-wireframe').buttonMarkup({icon: 'false'});
+              }
+
+              $('#model-popup').popup('open',
+                  {x: event.clientX + emUnits(6),
+                   y: event.clientY + emUnits(3)});
             });
       }
   );
@@ -944,7 +883,7 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('set_view_as', function (viewAs)
       {
         that.scene.setViewAs(that.scene.selectedEntity, viewAs);
-        that.scene.selectEntity(null);
+        that.scene.selectedEntity = null;
       }
   );
 
@@ -953,7 +892,7 @@ GZ3D.Gui.prototype.init = function()
         that.emitter.emit('deleteEntity',that.scene.selectedEntity);
         guiEvents.emit('notification_popup','Model deleted');
         $('#model-popup').popup('close');
-        that.scene.selectEntity(null);
+        that.scene.selectedEntity = null;
       }
   );
 
@@ -984,7 +923,7 @@ GZ3D.Gui.prototype.init = function()
         }
 
         $('.tab').css('border-left', '2em solid #2a2a2a');
-        $('#'+id+'Tab').css('border-left', '2em solid #22aadd');
+        $('#'+id+'Tab').css('border-left', '2em solid #aaaaaa');
       }
   );
 
@@ -996,71 +935,6 @@ GZ3D.Gui.prototype.init = function()
           $('.leftPanels').hide();
           $('.tab').css('left', '0em');
           $('.tab').css('border-left', '2em solid #2a2a2a');
-        }
-      }
-  );
-
-  guiEvents.on('setTreeSelected', function (object)
-      {
-        if (isWideScreen() && this.openTreeWhenSelected)
-        {
-          guiEvents.emit('openTab', 'treeMenu');
-        }
-        for (var i = 0; i < modelStats.length; ++i)
-        {
-          if (modelStats[i].name === object)
-          {
-            $('#modelsTree').collapsible({collapsed: false});
-            modelStats[i].selected = 'selectedTreeItem';
-          }
-          else
-          {
-            modelStats[i].selected = 'unselectedTreeItem';
-          }
-        }
-        for (i = 0; i < lightStats.length; ++i)
-        {
-          if (lightStats[i].name === object)
-          {
-            $('#lightsTree').collapsible({collapsed: false});
-            lightStats[i].selected = 'selectedTreeItem';
-          }
-          else
-          {
-            lightStats[i].selected = 'unselectedTreeItem';
-          }
-        }
-        that.updateStats();
-      }
-  );
-
-  guiEvents.on('setTreeDeselected', function ()
-      {
-        for (var i = 0; i < modelStats.length; ++i)
-        {
-          modelStats[i].selected = 'unselectedTreeItem';
-        }
-        for (i = 0; i < lightStats.length; ++i)
-        {
-          lightStats[i].selected = 'unselectedTreeItem';
-        }
-        that.updateStats();
-      }
-  );
-
-  guiEvents.on('selectEntity', function (name)
-      {
-        var object = that.scene.getByName(name);
-        that.scene.selectEntity(object);
-      }
-  );
-
-  guiEvents.on('openEntityPopup', function (event, name)
-      {
-        if (!isTouchDevice)
-        {
-          var object = that.scene.getByName(name);
-          that.openEntityPopup(event, object);
         }
       }
   );
@@ -1300,6 +1174,8 @@ GZ3D.GZIface = function(scene, gui)
 
   this.isConnected = false;
 
+  this.emitter = new EventEmitter2({ verbose: true });
+
   this.init();
   this.visualsToAdd = [];
 };
@@ -1318,7 +1194,7 @@ GZ3D.GZIface.prototype.connect = function()
   this.webSocket = new ROSLIB.Ros({
     url : 'ws://' + location.hostname + ':7681'
   });
-  
+
   var that = this;
   this.webSocket.on('connection', function() {
     that.onConnected();
@@ -1330,15 +1206,15 @@ GZ3D.GZIface.prototype.connect = function()
 
 GZ3D.GZIface.prototype.onError = function()
 {
-//  this.emitter.emit('error');
   this.scene.initScene();
+  this.emitter.emit('error');
   this.gui.guiEvents.emit('notification_popup', 'GzWeb is currently running without a server');
 };
 
 GZ3D.GZIface.prototype.onConnected = function()
 {
   this.isConnected = true;
-//this.emitter.emit('connection');
+  this.emitter.emit('connection');
 
   this.heartbeatTopic = new ROSLIB.Topic({
     ros : this.webSocket,
@@ -1601,13 +1477,6 @@ GZ3D.GZIface.prototype.onConnected = function()
     messageType : 'model',
   });
 
-  // Light messages - for modifying light pose
-  this.lightModifyTopic = new ROSLIB.Topic({
-    ros : this.webSocket,
-    name : '~/light',
-    messageType : 'light',
-  });
-
   var publishModelModify = function(model)
   {
     var matrix = model.matrixWorld;
@@ -1620,7 +1489,6 @@ GZ3D.GZIface.prototype.onConnected = function()
     {
       name : model.name,
       id : model.userData,
-      createEntity : 0,
       position :
       {
         x : translation.x,
@@ -1635,15 +1503,7 @@ GZ3D.GZIface.prototype.onConnected = function()
         z: quaternion.z
       }
     };
-    if (model.children[0] &&
-        model.children[0] instanceof THREE.Light)
-    {
-      that.lightModifyTopic.publish(modelMsg);
-    }
-    else
-    {
-      that.modelModifyTopic.publish(modelMsg);
-    }
+    that.modelModifyTopic.publish(modelMsg);
   };
 
   this.scene.emitter.on('poseChanged', publishModelModify);
@@ -1655,13 +1515,6 @@ GZ3D.GZIface.prototype.onConnected = function()
     messageType : 'factory',
   });
 
-  // Factory messages - for spawning new lights
-  this.lightFactoryTopic = new ROSLIB.Topic({
-    ros : this.webSocket,
-    name : '~/light',
-    messageType : 'light',
-  });
-
   var publishFactory = function(model, type)
   {
     var matrix = model.matrixWorld;
@@ -1669,11 +1522,10 @@ GZ3D.GZIface.prototype.onConnected = function()
     var quaternion = new THREE.Quaternion();
     var scale = new THREE.Vector3();
     matrix.decompose(translation, quaternion, scale);
-    var entityMsg =
+    var modelMsg =
     {
       name : model.name,
       type : type,
-      createEntity : 1,
       position :
       {
         x : translation.x,
@@ -1688,14 +1540,7 @@ GZ3D.GZIface.prototype.onConnected = function()
         z: quaternion.z
       }
     };
-    if (model.children[0].children[0] instanceof THREE.Light)
-    {
-      that.lightFactoryTopic.publish(entityMsg);
-    }
-    else
-    {
-      that.factoryTopic.publish(entityMsg);
-    }
+    that.factoryTopic.publish(modelMsg);
   };
 
   // For deleting models
@@ -1916,33 +1761,66 @@ GZ3D.GZIface.prototype.createVisualFromMsg = function(visual)
 
 GZ3D.GZIface.prototype.createLightFromMsg = function(light)
 {
-  var obj, factor, range, direction;
+  var lightObj;
+
+  var color = new THREE.Color();
+  color.r = light.diffuse.r;
+  color.g = light.diffuse.g;
+  color.b = light.diffuse.b;
 
   if (light.type === 1)
   {
-    factor = 1.5;
-    direction = null;
-    range = light.range;
+    lightObj = new THREE.AmbientLight(color.getHex());
+    lightObj.distance = light.range;
+    this.scene.setPose(lightObj, light.pose.position,
+        light.pose.orientation);
   }
-  else if (light.type === 2)
+  if (light.type === 2)
   {
-    factor = 5;
-    direction = light.direction;
-    range = light.range;
+    lightObj = new THREE.SpotLight(color.getHex());
+    lightObj.distance = light.range;
+    this.scene.setPose(lightObj, light.pose.position,
+        light.pose.orientation);
   }
   else if (light.type === 3)
   {
-    factor = 1;
-    direction = light.direction;
-    range = null;
+    lightObj = new THREE.DirectionalLight(color.getHex());
+    var dir = new THREE.Vector3(light.direction.x, light.direction.y,
+        light.direction.z);
+    var target = dir;
+    var negDir = dir.negate();
+    negDir.normalize();
+    var factor = 10;
+    light.pose.position.x += factor * negDir.x;
+    light.pose.position.y += factor * negDir.y;
+    light.pose.position.z += factor * negDir.z;
+
+    target.x -= light.pose.position.x;
+    target.y -= light.pose.position.y;
+    target.z -= light.pose.position.z;
+
+    lightObj.target.position = target;
+    lightObj.shadowCameraNear = 1;
+    lightObj.shadowCameraFar = 50;
+    lightObj.shadowMapWidth = 4094;
+    lightObj.shadowMapHeight = 4094;
+    lightObj.shadowCameraVisible = false;
+    lightObj.shadowCameraBottom = -100;
+    lightObj.shadowCameraLeft = -100;
+    lightObj.shadowCameraRight = 100;
+    lightObj.shadowCameraTop = 100;
+    lightObj.shadowBias = 0.0001;
+
+    lightObj.position.set(negDir.x, negDir.y, negDir.z);
+    this.scene.setPose(lightObj, light.pose.position,
+        light.pose.orientation);
   }
+  lightObj.intensity = light.attenuation_constant;
+  lightObj.castShadow = light.cast_shadows;
+  lightObj.shadowDarkness = 0.3;
+  lightObj.name = light.name;
 
-  obj = this.scene.createLight(light.type, light.diffuse,
-        light.attenuation_constant * factor,
-        light.pose, range, light.cast_shadows, light.name,
-        direction);
-
-  return obj;
+  return lightObj;
 };
 
 GZ3D.GZIface.prototype.createRoadsFromMsg = function(roads)
@@ -3365,7 +3243,27 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
 
       point.applyMatrix4(tempMatrix.getInverse(parentRotationMatrix));
 
-      translateObject(oldPosition, point);
+      scope.object.position.copy(oldPosition);
+      scope.object.position.add(point);
+
+      if(scope.snapDist)
+      {
+        if(isSelected('X'))
+        {
+          scope.object.position.x = Math.round(scope.object.position.x /
+              scope.snapDist) * scope.snapDist;
+        }
+        if(isSelected('Y'))
+        {
+          scope.object.position.y = Math.round(scope.object.position.y /
+              scope.snapDist) * scope.snapDist;
+        }
+        if(isSelected('Z'))
+        {
+          scope.object.position.z = Math.round(scope.object.position.z /
+              scope.snapDist) * scope.snapDist;
+        }
+      }
     }
 
     // rotate depends on a tap (= mouse click) to select the axis of rotation
@@ -3378,7 +3276,35 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
       tempVector.copy(offset).sub(worldPosition);
       tempVector.multiply(parentScale);
 
-      rotateObjectXYZ(point, tempVector);
+      rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z),
+          Math.atan2(point.y, point.x));
+      offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(
+          tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+
+      tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(
+          parentRotationMatrix));
+
+      quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
+      quaternionY.setFromAxisAngle(unitY, rotation.y - offsetRotation.y);
+      quaternionZ.setFromAxisAngle(unitZ, rotation.z - offsetRotation.z);
+      quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
+
+      if(scope.selected === 'RX')
+      {
+        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+      }
+      if(scope.selected === 'RY')
+      {
+        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
+      }
+      if(scope.selected === 'RZ')
+      {
+        tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
+      }
+
+      tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
+
+      scope.object.quaternion.copy(tempQuaternion);
     }
 
     scope.update();
@@ -3515,7 +3441,24 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
 
         point.applyMatrix4(tempMatrix.getInverse(parentRotationMatrix));
 
-        translateObject(oldPosition, point);
+        scope.object.position.copy(oldPosition);
+        scope.object.position.add(point);
+
+        if(scope.snapDist)
+        {
+            if(isSelected('X'))
+            {
+              scope.object.position.x = Math.round(scope.object.position.x / scope.snapDist) * scope.snapDist;
+            }
+            if(isSelected('Y'))
+            {
+              scope.object.position.y = Math.round(scope.object.position.y / scope.snapDist) * scope.snapDist;
+            }
+            if(isSelected('Z'))
+            {
+              scope.object.position.z = Math.round(scope.object.position.z / scope.snapDist) * scope.snapDist;
+            }
+        }
       }
       else if((scope.mode === 'rotate') && isSelected('R'))
       {
@@ -3541,7 +3484,6 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
           tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
 
           scope.object.quaternion.copy(tempQuaternion);
-          moveLightTarget();
         }
         else if(scope.selected === 'RXYZE')
         {
@@ -3555,11 +3497,35 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
           tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
 
           scope.object.quaternion.copy(tempQuaternion);
-          moveLightTarget();
         }
         else
         {
-          rotateObjectXYZ(point, tempVector);
+          rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+          offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+
+          tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
+
+          quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
+          quaternionY.setFromAxisAngle(unitY, rotation.y - offsetRotation.y);
+          quaternionZ.setFromAxisAngle(unitZ, rotation.z - offsetRotation.z);
+          quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
+
+          if(scope.selected === 'RX')
+          {
+            tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
+          }
+          if(scope.selected === 'RY')
+          {
+            tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
+          }
+          if(scope.selected === 'RZ')
+          {
+            tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
+          }
+
+          tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
+
+          scope.object.quaternion.copy(tempQuaternion);
         }
       }
     }
@@ -3630,94 +3596,6 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
     object.rotation.set(0, 0, 0);
     object.scale.set(1, 1, 1);
   }
-
-  /*
-   * Translate object
-   * @param {} oldPosition
-   * @param {} point
-   */
-  function translateObject(oldPosition, point)
-  {
-    scope.object.position.copy(oldPosition);
-    scope.object.position.add(point);
-
-    if(scope.snapDist)
-    {
-      if(isSelected('X'))
-      {
-        scope.object.position.x = Math.round(scope.object.position.x /
-            scope.snapDist) * scope.snapDist;
-      }
-      if(isSelected('Y'))
-      {
-        scope.object.position.y = Math.round(scope.object.position.y /
-            scope.snapDist) * scope.snapDist;
-      }
-      if(isSelected('Z'))
-      {
-        scope.object.position.z = Math.round(scope.object.position.z /
-            scope.snapDist) * scope.snapDist;
-      }
-    }
-    moveLightTarget();
-  }
-
-  /*
-   * Rotate object
-   * @param {} point
-   * @param {} tempVector
-   */
-  function rotateObjectXYZ(point, tempVector)
-  {
-    rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z),
-        Math.atan2(point.y, point.x));
-    offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(
-      tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
-
-    tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(
-      parentRotationMatrix));
-
-    quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
-    quaternionY.setFromAxisAngle(unitY, rotation.y - offsetRotation.y);
-    quaternionZ.setFromAxisAngle(unitZ, rotation.z - offsetRotation.z);
-    quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
-
-    if(scope.selected === 'RX')
-    {
-      tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
-    }
-    if(scope.selected === 'RY')
-    {
-      tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionY);
-    }
-    if(scope.selected === 'RZ')
-    {
-      tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionZ);
-    }
-
-    tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionXYZ);
-
-    scope.object.quaternion.copy(tempQuaternion);
-
-    moveLightTarget();
-  }
-
-  /*
-   * Move light target
-   */
-  function moveLightTarget()
-  {
-    if (scope.object.children[0] &&
-       (scope.object.children[0] instanceof THREE.SpotLight ||
-        scope.object.children[0] instanceof THREE.DirectionalLight))
-    {
-      var lightObj = scope.object.children[0];
-      var dir = new THREE.Vector3(0,0,0);
-      dir.copy(scope.object.direction);
-      scope.object.localToWorld(dir);
-      lightObj.target.position.copy(dir);
-    }
-  }
 };
 
 GZ3D.Manipulator.prototype = Object.create(THREE.EventDispatcher.prototype);
@@ -3785,7 +3663,8 @@ GZ3D.RadialMenu.prototype.init = function()
   this.addItem('transparent','style/images/transparent.png');
   this.addItem('wireframe','style/images/wireframe.png');
 
-  this.setNumberOfItems(this.menu.children.length);
+  this.numberOfItems = this.menu.children.length;
+  this.offset = this.numberOfItems - 1 - Math.floor(this.numberOfItems/2);
 
   // Start hidden
   this.hide();
@@ -3798,7 +3677,7 @@ GZ3D.RadialMenu.prototype.init = function()
  */
 GZ3D.RadialMenu.prototype.hide = function(event,callback)
 {
-  for (var i = 0; i < this.numberOfItems; i++)
+  for ( var i in this.menu.children )
   {
     var item = this.menu.children[i];
 
@@ -3844,16 +3723,6 @@ GZ3D.RadialMenu.prototype.show = function(event,model)
   }
 
   this.model = model;
-
-  if (model.children[0] instanceof THREE.Light)
-  {
-    this.setNumberOfItems(3);
-  }
-  else
-  {
-    this.setNumberOfItems(5);
-  }
-
   var pointer = this.getPointer(event);
   this.startPosition = pointer;
 
@@ -3868,7 +3737,7 @@ GZ3D.RadialMenu.prototype.show = function(event,model)
     this.menu.getObjectByName('wireframe').isHighlighted = true;
   }
 
-  for (var i = 0; i < this.numberOfItems; i++)
+  for ( var i in this.menu.children )
   {
     var item = this.menu.children[i];
 
@@ -3897,7 +3766,7 @@ GZ3D.RadialMenu.prototype.update = function()
   }
 
   // Move outwards
-  for (var i = 0; i < this.numberOfItems; i++)
+  for ( var i in this.menu.children )
   {
     var item = this.menu.children[i];
 
@@ -4014,7 +3883,7 @@ GZ3D.RadialMenu.prototype.onLongPressMove = function(event)
   }
 
   var counter = 0;
-  for (var i = 0; i < this.numberOfItems; i++)
+  for ( var i in this.menu.children )
   {
     var item = this.menu.children[i];
 
@@ -4098,16 +3967,6 @@ GZ3D.RadialMenu.prototype.addItem = function(type, iconTexture)
 };
 
 /**
- * Set number of items (different for models and lights)
- * @param {int} number
- */
-GZ3D.RadialMenu.prototype.setNumberOfItems = function(number)
-{
-  this.numberOfItems = number;
-  this.offset = this.numberOfItems - 1 - Math.floor(this.numberOfItems/2);
-};
-
-/**
  * The scene is where everything is placed, from objects, to lights and cameras.
  * @constructor
  */
@@ -4188,9 +4047,16 @@ GZ3D.Scene.prototype.init = function()
       function(event) {that.onPointerUp(event);}, false );
 
   // Handles for translating and rotating objects
-  this.modelManipulator = new GZ3D.Manipulator(this.camera, isTouchDevice,
+  if (isTouchDevice)
+  {
+    this.modelManipulator = new GZ3D.Manipulator(this.camera, true,
       this.getDomElement());
-
+  }
+  else
+  {
+    this.modelManipulator = new GZ3D.Manipulator(this.camera, false,
+      this.getDomElement());
+  }
   this.timeDown = null;
 
   this.controls = new THREE.OrbitControls(this.camera);
@@ -4817,235 +4683,6 @@ GZ3D.Scene.prototype.createBox = function(width, height, depth)
 };
 
 /**
- * Create light
- * @param {} type - 1: point, 2: spot, 3: directional
- * @param {} color
- * @param {} intensity
- * @param {} pose
- * @param {} distance
- * @param {} cast_shadows
- * @param {} name
- * @param {} direction
- * @returns {THREE.Object3D}
- */
-GZ3D.Scene.prototype.createLight = function(type, color, intensity, pose,
-    distance, cast_shadows, name, direction)
-{
-  var obj = new THREE.Object3D();
-
-  if (typeof(color) === 'undefined')
-  {
-    color = 0xffffff;
-  }
-  else if (typeof(color) !== THREE.Color)
-  {
-    var Color = new THREE.Color();
-    Color.r = color.r;
-    Color.g = color.g;
-    Color.b = color.b;
-    color = Color;
-  }
-
-  var matrixWorld;
-
-  if (pose)
-  {
-    var quaternion = new THREE.Quaternion(
-        pose.orientation.x,
-        pose.orientation.y,
-        pose.orientation.z,
-        pose.orientation.w);
-
-    var translation = new THREE.Vector3(
-        pose.position.x,
-        pose.position.y,
-        pose.position.z);
-
-    matrixWorld = new THREE.Matrix4();
-    matrixWorld.compose(translation, quaternion, new THREE.Vector3(1,1,1));
-
-    this.setPose(obj, pose.position, pose.orientation);
-    obj.matrixWorldNeedsUpdate = true;
-  }
-
-  var elements;
-  if (type === 1)
-  {
-    elements = this.createPointLight(obj, color, intensity,
-        distance, cast_shadows);
-  }
-  else if (type === 2)
-  {
-    elements = this.createSpotLight(obj, color, intensity,
-        distance, cast_shadows);
-  }
-  else if (type === 3)
-  {
-    elements = this.createDirectionalLight(obj, color, intensity,
-        cast_shadows);
-  }
-
-  var lightObj = elements[0];
-  var helper = elements[1];
-
-  if (name)
-  {
-    lightObj.name = name;
-    obj.name = name;
-    helper.name = name + '_lightHelper';
-  }
-
-  if (direction)
-  {
-    var dir = new THREE.Vector3(direction.x, direction.y,
-        direction.z);
-
-    obj.direction = new THREE.Vector3();
-    obj.direction.copy(dir);
-
-    dir.applyMatrix4(matrixWorld); // localToWorld
-    lightObj.target.position.copy(dir);
-  }
-
-  obj.add(lightObj);
-  obj.add(helper);
-  return obj;
-};
-
-/**
- * Create point light - called by createLight
- * @param {} obj - light object
- * @param {} color
- * @param {} intensity
- * @param {} distance
- * @param {} cast_shadows
- * @returns {[THREE.Light, THREE.Mesh]}
- */
-GZ3D.Scene.prototype.createPointLight = function(obj, color, intensity,
-    distance, cast_shadows)
-{
-  if (typeof(intensity) === 'undefined')
-  {
-    intensity = 0.5;
-  }
-
-  var lightObj = new THREE.PointLight(color, intensity);
-  lightObj.shadowDarkness = 0.3;
-
-  if (distance)
-  {
-    lightObj.distance = distance;
-  }
-  if (cast_shadows)
-  {
-    lightObj.castShadow = cast_shadows;
-  }
-
-  var helperGeometry = new THREE.OctahedronGeometry(0.25, 0);
-  helperGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI/2));
-  var helperMaterial = new THREE.MeshBasicMaterial(
-        {wireframe: true, color: 0x00ff00});
-  var helper = new THREE.Mesh(helperGeometry, helperMaterial);
-
-  return [lightObj, helper];
-};
-
-/**
- * Create spot light - called by createLight
- * @param {} obj - light object
- * @param {} color
- * @param {} intensity
- * @param {} distance
- * @param {} cast_shadows
- * @returns {[THREE.Light, THREE.Mesh]}
- */
-GZ3D.Scene.prototype.createSpotLight = function(obj, color, intensity,
-    distance, cast_shadows)
-{
-  if (typeof(intensity) === 'undefined')
-  {
-    intensity = 1;
-  }
-  if (typeof(distance) === 'undefined')
-  {
-    distance = 20;
-  }
-
-  var lightObj = new THREE.SpotLight(color, intensity);
-  lightObj.distance = distance;
-  lightObj.position.set(0,0,0);
-  lightObj.shadowDarkness = 0.3;
-
-  if (cast_shadows)
-  {
-    lightObj.castShadow = cast_shadows;
-  }
-
-  var helperGeometry = new THREE.CylinderGeometry(0, 0.3, 0.2, 4, 1, true);
-  helperGeometry.applyMatrix(new THREE.Matrix4().makeRotationX(Math.PI/2));
-  helperGeometry.applyMatrix(new THREE.Matrix4().makeRotationZ(Math.PI/4));
-  var helperMaterial = new THREE.MeshBasicMaterial(
-        {wireframe: true, color: 0x00ff00});
-  var helper = new THREE.Mesh(helperGeometry, helperMaterial);
-
-  return [lightObj, helper];
-
-};
-
-/**
- * Create directional light - called by createLight
- * @param {} obj - light object
- * @param {} color
- * @param {} intensity
- * @param {} cast_shadows
- * @returns {[THREE.Light, THREE.Mesh]}
- */
-GZ3D.Scene.prototype.createDirectionalLight = function(obj, color, intensity,
-    cast_shadows)
-{
-  if (typeof(intensity) === 'undefined')
-  {
-    intensity = 1;
-  }
-
-  var lightObj = new THREE.DirectionalLight(color, intensity);
-  lightObj.shadowCameraNear = 1;
-  lightObj.shadowCameraFar = 50;
-  lightObj.shadowMapWidth = 4094;
-  lightObj.shadowMapHeight = 4094;
-  lightObj.shadowCameraVisible = false;
-  lightObj.shadowCameraBottom = -100;
-  lightObj.shadowCameraLeft = -100;
-  lightObj.shadowCameraRight = 100;
-  lightObj.shadowCameraTop = 100;
-  lightObj.shadowBias = 0.0001;
-  lightObj.position.set(0,0,0);
-  lightObj.shadowDarkness = 0.3;
-
-  if (cast_shadows)
-  {
-    lightObj.castShadow = cast_shadows;
-  }
-
-  var helperGeometry = new THREE.Geometry();
-  helperGeometry.vertices.push(new THREE.Vector3(-0.5, -0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3(-0.5,  0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3(-0.5,  0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3( 0.5,  0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3( 0.5,  0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3( 0.5, -0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3( 0.5, -0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3(-0.5, -0.5, 0));
-  helperGeometry.vertices.push(new THREE.Vector3(   0,    0, 0));
-  helperGeometry.vertices.push(new THREE.Vector3(   0,    0, -0.5));
-  var helperMaterial = new THREE.LineBasicMaterial({color: 0x00ff00});
-  var helper = new THREE.Line(helperGeometry, helperMaterial,
-      THREE.LinePieces);
-
-  return [lightObj, helper];
-};
-
-/**
  * Create roads
  * @param {} points
  * @param {} width
@@ -5661,7 +5298,10 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     {
       this.emitter.emit('poseChanged', this.modelManipulator.object);
     }
-    this.selectEntity(null);
+    this.hideBoundingBox();
+
+    this.modelManipulator.detach();
+    this.scene.remove(this.modelManipulator.gizmo);
   }
   else
   {
@@ -5670,7 +5310,7 @@ GZ3D.Scene.prototype.setManipulationMode = function(mode)
     // model was selected during view mode
     if (this.selectedEntity)
     {
-      this.selectEntity(this.selectedEntity);
+      this.attachManipulator(this.selectedEntity, mode);
     }
   }
 
@@ -5720,6 +5360,13 @@ GZ3D.Scene.prototype.attachManipulator = function(model,mode)
   {
     this.emitter.emit('poseChanged', this.modelManipulator.object);
   }
+  if (this.modelManipulator.object !== model)
+  {
+    this.hideBoundingBox();
+  }
+
+  this.selectedEntity = model;
+  this.showBoundingBox(model);
 
   if (mode !== 'view')
   {
@@ -5759,7 +5406,7 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
       && this.modelManipulator.pickerNames.indexOf(model.name) === -1)
   {
     this.radialMenu.show(event,model);
-    this.selectEntity(model);
+    this.showBoundingBox(model);
   }
 };
 
@@ -5769,11 +5416,6 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
  */
 GZ3D.Scene.prototype.showBoundingBox = function(model)
 {
-  if (typeof model === 'string')
-  {
-    model = this.scene.getObjectByName(model);
-  }
-
   if (this.boundingBox.visible)
   {
     if (this.boundingBox.parent === model)
@@ -5783,6 +5425,7 @@ GZ3D.Scene.prototype.showBoundingBox = function(model)
     else
     {
       this.hideBoundingBox();
+      this.selectedEntity = model;
     }
   }
   var box = new THREE.Box3();
@@ -5861,6 +5504,7 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
     this.boundingBox.parent.remove(this.boundingBox);
   }
   this.boundingBox.visible = false;
+  this.selectedEntity = null;
 };
 
 /**
@@ -5870,16 +5514,18 @@ GZ3D.Scene.prototype.hideBoundingBox = function()
  */
 GZ3D.Scene.prototype.onRightClick = function(event, callback)
 {
-  var pos = new THREE.Vector2(event.clientX, event.clientY);
-  var model = this.getRayCastModel(pos, new THREE.Vector3());
-
-  if(model && model.name !== '' && model.name !== 'plane' &&
-      this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+  if(this.manipulationMode === 'view')
   {
-    callback(model);
+    var pos = new THREE.Vector2(event.clientX, event.clientY);
+    var model = this.getRayCastModel(pos, new THREE.Vector3());
+
+    if(model && model.name !== '' && model.name !== 'plane' &&
+        this.modelManipulator.pickerNames.indexOf(model.name) === -1)
+    {
+      callback(model);
+    }
   }
 };
-
 
 /**
  * Set model's view mode
@@ -6033,6 +5679,701 @@ GZ3D.Scene.prototype.selectEntity = function(object)
   }
 };
 
+GZ3D.SdfParser = function(scene, gui, gziface)
+{
+  // set the sdf version
+  this.SDF_VERSION = 1.40;
+  this.MATERIAL_ROOT = 'assets/';
+
+  // set the xml parser function
+  this.parseXML = function(xmlStr) {
+    return (new window.DOMParser()).parseFromString(xmlStr, 'text/xml');
+  };
+
+  this.scene = scene;
+  this.scene.setSDFParser(this);
+  this.gui = gui;
+  this.gziface = gziface;
+  this.init();
+  
+  // cache materials if more than one model needs them
+  this.materials = [];
+  this.entityMaterial = {};
+  
+  //FIXME: for testing we recorded materials by hand
+  this.materials = this.getMaterials();
+
+};
+
+GZ3D.SdfParser.prototype.init = function()
+{
+  var that = this;
+  this.gziface.emitter.on('error', function() {
+    that.onConnectionError();
+  });
+
+};
+
+GZ3D.SdfParser.prototype.onConnectionError = function()
+{
+  var that = this;
+  var entityCreated = function(model, type) {
+    if (!that.gziface.isConnected) {
+      that.addModelByType(model, type);
+    }
+  };
+  this.gui.emitter.on('entityCreated', entityCreated);
+  
+  // add sun to the scene
+  var sunModel = this.loadSDF('sun');
+  this.scene.add(sunModel);
+  
+};
+
+//TODO: for now gziface inits the scene
+//GZ3D.SdfParser.prototype.initScene = function()
+//{
+//  this.scene.createGrid();
+//
+//  // add a directional light as the default gazebo server
+//  var jsonString = '{"direction":{"x":0.5,"y":0.1,"z":-0.9},"pose":{"position":{"x":0,"y":0,"z":10},"orientation":{"x":0,"y":0,"z":0,"w":1}},"specular":{"r":0.20000000298023224,"b":0.20000000298023224,"g":0.20000000298023224,"a":1},"name":"sun","diffuse":{"r":0.800000011920929,"b":0.800000011920929,"g":0.800000011920929,"a":1},"attenuation_linear":0.009999999776482582,"type":3,"attenuation_constant":0.8999999761581421,"attenuation_quadratic":0.0010000000474974513,"range":1000,"cast_shadows":true}';
+//  var lightObj = JSON.parse(jsonString);
+//  this.createLight(lightObj);
+//
+//};
+
+GZ3D.SdfParser.prototype.parseColor = function(diffuseStr)
+{
+  var color = {};
+  var values = diffuseStr.split(' ');
+  
+  color.r = parseFloat(values[0]);
+  color.g = parseFloat(values[1]);
+  color.b = parseFloat(values[2]);
+  color.a = parseFloat(values[3]);
+  
+  return color;
+};
+
+GZ3D.SdfParser.prototype.parse3DVector = function(vectorStr)
+{
+  var vector3D = {};
+  var values = vectorStr.split(' ');
+  vector3D.x = parseFloat(values[0]);
+  vector3D.y = parseFloat(values[1]);
+  vector3D.z = parseFloat(values[2]);
+  return vector3D;
+};
+
+GZ3D.SdfParser.prototype.spawnLightFromSDF = function(sdfObj)
+{
+  var light = sdfObj.light;
+  var lightObj;
+  var color = new THREE.Color();
+  var diffuseColor = this.parseColor(light.diffuse);
+  color.r = diffuseColor.r;
+  color.g = diffuseColor.g;
+  color.b = diffuseColor.b;
+
+  if (light['@type'] === 'point')
+  {
+    lightObj = new THREE.AmbientLight(color.getHex());
+    lightObj.distance = light.range;
+    this.scene.setPose(lightObj, light.pose.position,
+            light.pose.orientation);
+  }
+  if (light['@type'] === 'spot')
+  {
+    lightObj = new THREE.SpotLight(color.getHex());
+    lightObj.distance = light.range;
+    this.scene.setPose(lightObj, light.pose.position,
+            light.pose.orientation);
+  }
+  else if (light['@type'] === 'directional')
+  {
+    lightObj = new THREE.DirectionalLight(color.getHex());
+    
+    var direction = this.parse3DVector(light.direction);
+    var dir = new THREE.Vector3(direction.x, direction.y, direction.z);
+    var target = dir;
+    var negDir = dir.negate();
+    negDir.normalize();
+    var factor = 10;
+    var pose = this.parsePose(light.pose);
+    pose.position.x += factor * negDir.x;
+    pose.position.y += factor * negDir.y;
+    pose.position.z += factor * negDir.z;
+
+    target.x -= pose.position.x;
+    target.y -= pose.position.y;
+    target.z -= pose.position.z;
+
+    lightObj.target.position = target;
+    lightObj.shadowCameraNear = 1;
+    lightObj.shadowCameraFar = 50;
+    lightObj.shadowMapWidth = 4094;
+    lightObj.shadowMapHeight = 4094;
+    lightObj.shadowCameraVisible = false;
+    lightObj.shadowCameraBottom = -100;
+    lightObj.shadowCameraLeft = -100;
+    lightObj.shadowCameraRight = 100;
+    lightObj.shadowCameraTop = 100;
+    lightObj.shadowBias = 0.0001;
+
+    lightObj.position.set(negDir.x, negDir.y, negDir.z);
+    this.scene.setPose(lightObj, pose.position, pose.orientation);
+  }
+  lightObj.intensity = parseFloat(light.attenuation.constant);
+  lightObj.castShadow = light.cast_shadows;
+  lightObj.shadowDarkness = 0.3;
+  lightObj.name = light['@name'];
+
+//  this.scene.add(lightObj);
+  return lightObj;
+};
+
+GZ3D.SdfParser.prototype.parsePose = function(poseStr)
+{
+  var values = poseStr.split(' ');
+
+  var position = new THREE.Vector3(parseFloat(values[0]), parseFloat(values[1]), parseFloat(values[2]));
+
+  // get euler rotation and convert it to Quaternion
+  var quaternion = new THREE.Quaternion();
+  var euler = new THREE.Euler(parseFloat(values[3]), parseFloat(values[4]), parseFloat(values[5]), 'ZYX');
+  quaternion.setFromEuler(euler);
+
+  var pose = {
+          'position': position,
+          'orientation': quaternion
+  };
+
+  return pose;
+
+};
+
+GZ3D.SdfParser.prototype.createMaterial = function(material)
+{
+  var textureUri, texture, mat;
+  var ambient, diffuse, specular, opacity, normalMap;
+  
+  if (!material)
+  {
+    return null;
+  }
+  
+  var script  = material.script;
+  if (script)
+  {
+    if (script.uri){
+      // if there is just one uri convert it to array
+      if (!(script.uri instanceof Array)){
+        script.uri = [script.uri];
+      }
+      
+      if (script.name){
+        mat = this.materials[script.name];
+        // if we already cached the materials
+        if (mat){
+          ambient = mat.ambient;
+          diffuse = mat.diffuse;
+          specular = mat.specular;
+          opacity = mat.opacity;
+
+          if (mat.texture){
+            for (var i = 0; i < script.uri.length; i++){
+              var uriType = script.uri[i].substring(0,script.uri[i].indexOf('://'));
+              if (uriType === 'model'){
+                // if texture uri
+                if (script.uri[i].indexOf('textures') > 0)
+                {
+                  textureUri = script.uri[i].substring(script.uri[i].indexOf('://') + 3);
+                  break;
+                }
+              } else if (uriType === 'file'){
+                if (script.uri[i].indexOf('materials') > 0)
+                {
+                  textureUri = script.uri[i].substring(
+                      script.uri[i].indexOf('://') + 3,
+                      script.uri[i].indexOf('materials') + 9) + '/textures';
+                  break;
+                }
+              }
+            }
+            texture = this.MATERIAL_ROOT + textureUri + '/' + mat.texture;
+          }
+        } else {
+          //TODO: how to handle if material is not cached
+          console.log(script.name + ' is not cached!!!');
+        }
+      }
+    }
+  }
+
+  // normal map
+  if (material.normal_map)
+  {
+    var mapUri;
+    if (material.normal_map.indexOf('://') > 0)
+    {
+      mapUri = material.normal_map.substring(
+          material.normal_map.indexOf('://') + 3,
+          material.normal_map.lastIndexOf('/'));
+    }
+    else
+    {
+      mapUri = textureUri;
+    }
+    if (mapUri)
+    {
+      var startIndex = material.normal_map.lastIndexOf('/') + 1;
+      if (startIndex < 0)
+      {
+        startIndex = 0;
+      }
+      var normalMapName = material.normal_map.substr(startIndex,
+          material.normal_map.lastIndexOf('.') - startIndex);
+      normalMap = this.MATERIAL_ROOT +
+        mapUri  + '/' + normalMapName + '.png';
+    }
+  }
+
+  return {
+      texture: texture,
+      normalMap: normalMap,
+      ambient: ambient,
+      diffuse: diffuse,
+      specular: specular,
+      opacity: opacity
+  };
+  
+};
+
+GZ3D.SdfParser.prototype.parseSize = function(size)
+{
+  var sizeObj;
+  var values = size.split(' ');
+  var x = parseFloat(values[0]);
+  var y = parseFloat(values[1]);
+  var z = parseFloat(values[2]);
+  sizeObj = {
+          'x':x,
+          'y':y,
+          'z':z
+  };
+  
+  return sizeObj;
+};
+
+GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
+{
+  var that = this;
+  var obj;
+  var size, normal;
+  
+  var material = this.createMaterial(mat);
+  if (geom.box)
+  {
+    size = this.parseSize(geom.box.size);
+    obj = this.scene.createBox(size.x, size.y, size.z);
+  }
+  else if (geom.cylinder)
+  {
+    obj = this.scene.createCylinder(geom.cylinder.radius,
+        geom.cylinder.length);
+  }
+  else if (geom.sphere)
+  {
+    obj = this.scene.createSphere(geom.sphere.radius);
+  }
+  else if (geom.plane)
+  {
+    normal = this.parseSize(geom.plane.normal);
+    size = this.parseSize(geom.plane.size);
+    obj = this.scene.createPlane(normal.x, normal.y,
+        normal.z, size.x, size.y);
+  }
+  else if (geom.mesh)
+  {
+    {
+      var meshUri = geom.mesh.uri;
+      var submesh = geom.mesh.submesh;
+      var centerSubmesh = geom.mesh.center_submesh;
+
+      var uriType = meshUri.substring(0, meshUri.indexOf('://'));
+      if (uriType === 'file' || uriType === 'model')
+      {
+        var modelName = meshUri.substring(meshUri.indexOf('://') + 3);
+        if (geom.mesh.scale)
+        {
+          parent.scale.x = geom.mesh.scale.x;
+          parent.scale.y = geom.mesh.scale.y;
+          parent.scale.z = geom.mesh.scale.z;
+        }
+
+        var modelUri = this.MATERIAL_ROOT + '/' + modelName;
+        
+        console.log(modelUri);
+        var materialName = parent.name + '::' + modelUri;
+        console.log(materialName);
+        this.entityMaterial[materialName] = material;
+
+        this.scene.loadMesh(modelUri, submesh,
+            centerSubmesh, function(dae) {
+              if (that.entityMaterial[materialName])
+              {
+                var allChildren = [];
+                dae.getDescendants(allChildren);
+                for (var c = 0; c < allChildren.length; ++c)
+                {
+                  if (allChildren[c] instanceof THREE.Mesh)
+                  {
+                    that.scene.setMaterial(allChildren[c],
+                        that.entityMaterial[materialName]);
+                    break;
+                  }
+                }
+              }
+              parent.add(dae);
+              loadGeom(parent);
+            });
+      }
+    }
+  }
+//TODO: how to handle height map without connecting to the server
+//  else if (geom.heightmap)
+//  {
+//    var request = new ROSLIB.ServiceRequest({
+//      name : that.scene.name
+//    });
+//
+//    // redirect the texture paths to the assets dir
+//    var textures = geom.heightmap.texture;
+//    for ( var k = 0; k < textures.length; ++k)
+//    {
+//      textures[k].diffuse = this.parseUri(textures[k].diffuse);
+//      textures[k].normal = this.parseUri(textures[k].normal);
+//    }
+//
+//    var sizes = geom.heightmap.size;
+//
+//    // send service request and load heightmap on response
+//    this.heightmapDataService.callService(request,
+//        function(result)
+//        {
+//          var heightmap = result.heightmap;
+//          // gazebo heightmap is always square shaped,
+//          // and a dimension of: 2^N + 1
+//          that.scene.loadHeightmap(heightmap.heights, heightmap.size.x,
+//              heightmap.size.y, heightmap.width, heightmap.height,
+//              heightmap.origin, textures,
+//              geom.heightmap.blend, parent);
+//            //console.log('Result for service call on ' + result);
+//        });
+//
+//    //this.scene.loadHeightmap(parent)
+//  }
+
+  if (obj)
+  {
+    if (material)
+    {
+      // texture mapping for simple shapes and planes only,
+      // not used by mesh and terrain
+      this.scene.setMaterial(obj, material);
+    }
+    obj.updateMatrix();
+    parent.add(obj);
+    loadGeom(parent);
+  }
+
+  function loadGeom(visualObj)
+  {
+    var allChildren = [];
+    visualObj.getDescendants(allChildren);
+    for (var c = 0; c < allChildren.length; ++c)
+    {
+      if (allChildren[c] instanceof THREE.Mesh)
+      {
+        allChildren[c].castShadow = true;
+        allChildren[c].receiveShadow = true;
+
+        if (visualObj.castShadows)
+        {
+          allChildren[c].castShadow = visualObj.castShadows;
+        }
+        if (visualObj.receiveShadows)
+        {
+          allChildren[c].receiveShadow = visualObj.receiveShadows;
+        }
+
+        if (visualObj.name.indexOf('COLLISION_VISUAL') >= 0)
+        {
+          allChildren[c].castShadow = false;
+          allChildren[c].receiveShadow = false;
+
+          allChildren[c].visible = this.scene.showCollisions;
+        }
+        break;
+      }
+    }
+  }
+  
+};
+
+GZ3D.SdfParser.prototype.createVisual = function(visual)
+{
+  //TODO: handle these node values
+  // cast_shadow, receive_shadows
+  if (visual.geometry)
+  {
+    var visualObj = new THREE.Object3D();
+    visualObj.name = visual['@name'];
+    
+    if (visual.pose)
+    {
+      var visualPose = this.parsePose(visual.pose);
+      this.scene.setPose(visualObj, visualPose.position, visualPose.orientation);
+    }
+    
+    this.createGeom(visual.geometry, visual.material, visualObj);
+    
+    return visualObj;
+  }
+  
+  return null;
+  
+};
+
+GZ3D.SdfParser.prototype.spawnFromSDF = function(sdf)
+{
+  //parse sdfXML
+  var sdfXML;
+  if ((typeof sdf) === 'string') {
+    sdfXML = this.parseXML(sdf);
+  } else {
+    sdfXML = sdf;
+  }
+  
+  //convert SDF XML to Json string and parse JSON string to object
+  //TODO: we need better xml 2 json object convertor
+  var myjson = xml2json(sdfXML, '\t');
+  var sdfObj = JSON.parse(myjson).sdf;
+  // it is easier to manipulate json object
+  
+  if (sdfObj.model) {
+    return this.spawnModelFromSDF(sdfObj);
+  } else if (sdfObj.light) {
+    return this.spawnLightFromSDF(sdfObj);
+  }
+  
+};
+
+GZ3D.SdfParser.prototype.loadSDF = function(modelName)
+{
+  var sdf = this.loadModel(modelName);
+  return this.spawnFromSDF(sdf);
+};
+
+GZ3D.SdfParser.prototype.spawnModelFromSDF = function(sdfObj)
+{
+  // create the model
+  var modelObj = new THREE.Object3D();
+  modelObj.name = sdfObj.model['@name'];
+  //TODO: is that needed
+  //modelObj.userData = sdfObj.model.@id;
+
+  var pose;
+  var i, j, k;
+  var visualObj;
+  var linkObj, linkPose;
+  
+  if (sdfObj.model.pose)
+  {
+    pose = this.parsePose(sdfObj.model.pose);
+    this.scene.setPose(modelObj, pose.position, pose.orientation);
+  }
+  
+  //convert link object to link array
+  if (!(sdfObj.model.link instanceof Array)) {
+    sdfObj.model.link = [sdfObj.model.link];
+  }
+
+  for (i = 0; i < sdfObj.model.link.length; i++)
+  {
+    linkObj = this.createLink(sdfObj.model.link[i]);
+    modelObj.add(linkObj);
+  }
+  
+//  this.scene.add(modelObj);
+  return modelObj;
+
+};
+
+GZ3D.SdfParser.prototype.createLink = function(link)
+{
+  var linkPose, visualObj;
+  var linkObj = new THREE.Object3D();
+  linkObj.name = link['@name'];
+  
+  if (link.pose)
+  {
+    linkPose = this.parsePose(link.pose);
+    this.scene.setPose(linkObj, linkPose.position, linkPose.orientation);
+  }
+  
+  if (link.visual)
+  {
+    if (!(link.visual instanceof Array)) {
+      link.visual = [link.visual];
+    }
+    
+    for (var i = 0; i < link.visual.length; i++) {
+      visualObj = this.createVisual(link.visual[i]);
+      if (visualObj && !visualObj.parent)
+      {
+        linkObj.add(visualObj);
+      }
+    }
+  }
+  
+  if (link.collision)
+  {
+    if (link.collision.visual)
+    {
+      if (!(link.collision.visual instanceof Array)) {
+        link.collision.visual = [link.collision.visual];
+      }
+      
+      for (var j = 0; j < link.collision.visual.length; j++) {
+        visualObj = this.createVisual(link.collision.visual[j]);
+        if (visualObj && !visualObj.parent)
+        {
+          linkObj.add(visualObj);
+        }
+      }
+      
+    }
+  }
+  
+  return linkObj;
+};
+
+GZ3D.SdfParser.prototype.addModelByType = function(model, type)
+{
+  var sdf, translation, euler;
+  var modelObj;
+  
+  if (model.matrixWorld) {
+    var matrix = model.matrixWorld;
+    translation = new THREE.Vector3();
+    euler = new THREE.Euler();
+    var scale = new THREE.Vector3();
+    matrix.decompose(translation, euler, scale);
+  }
+
+  if (type === 'box') {
+    sdf = this.createBoxSDF(translation, euler);
+    modelObj = this.spawnFromSDF(sdf);
+  } else if (type === 'sphere') {
+    sdf = this.createSphereSDF(translation, euler);
+    modelObj = this.spawnFromSDF(sdf);
+  } else if (type === 'cylinder') {
+    sdf = this.createCylinderSDF(translation, euler);
+    modelObj = this.spawnFromSDF(sdf);
+  } else {
+    var sdfObj = this.loadSDF(type);
+    modelObj = new THREE.Object3D();
+    modelObj.add(sdfObj);
+    modelObj.matrixWorld = modelObj.matrixWorld;
+    var quaternion = new THREE.Quaternion();
+    quaternion.setFromEuler(euler);
+    this.scene.setPose(modelObj, translation, quaternion);
+  }
+  
+  this.scene.add(modelObj);
+};
+
+GZ3D.SdfParser.prototype.createSimpleShapeSDF = function(type, translation, euler, geomSDF)
+{
+  var sdf;
+  
+  sdf = '<sdf version="' + this.SDF_VERSION + '">'
+  + '<model name="' + type + '">'
+  + '<pose>' + translation.x + ' ' + translation.y + ' ' + translation.z + ' '
+  + euler.x + ' ' + euler.y + ' ' + euler.z + '</pose>'
+  + '<link name="link">'
+  +   '<inertial><mass>1.0</mass></inertial>'
+  +   '<collision name="collision">'
+  +     '<geometry>'
+  +        geomSDF
+  +     '</geometry>'
+  + '</collision>'
+  + '<visual name="visual">'
+  +     '<geometry>'
+  +        geomSDF
+  +     '</geometry>'
+  +     '<material>'
+  +       '<script>'
+  +         '<uri>file://media/materials/scripts/gazebo.material'
+  +         '</uri>'
+  +         '<name>Gazebo/Grey</name>'
+  +       '</script>'
+  +     '</material>'
+  +   '</visual>'
+  + '</link>'
+  + '</model>'
+  + '</sdf>';
+  
+  return sdf;
+};
+
+GZ3D.SdfParser.prototype.createBoxSDF = function(translation, euler)
+{
+  var geomSDF = '<box>'
+    +   '<size>1.0 1.0 1.0</size>'
+    + '</box>';
+  
+  return this.createSimpleShapeSDF('box', translation, euler, geomSDF);
+};
+
+GZ3D.SdfParser.prototype.createSphereSDF = function(translation, euler)
+{
+  var geomSDF = '<sphere>'
+    +   '<radius>0.5</radius>'
+    + '</sphere>';
+  
+  return this.createSimpleShapeSDF('sphere', translation, euler, geomSDF);
+};
+
+GZ3D.SdfParser.prototype.createCylinderSDF = function(translation, euler)
+{
+  var geomSDF = '<cylinder>'
+    +   '<radius>0.5</radius>'
+    +   '<length>1.0</length>'
+    + '</cylinder>';
+  
+  return this.createSimpleShapeSDF('cylinder', translation, euler, geomSDF);
+};
+
+GZ3D.SdfParser.prototype.getMaterials = function()
+{
+  var jsonStr = '{"Beer/Diffuse":{"texture":"beer.png"},"BrickBox/Diffuse":{"texture":"simple_box.png"},"DeferredLighting/AmbientLight":{"depth_write":true,"depth_check":true},"DeferredLighting/LightMaterial/Geometry":{"depth_write":false,"depth_check":true},"DeferredLighting/LightMaterial/GeometryShadow":{},"DeferredLighting/LightMaterial/Quad":{"depth_check":false},"DeferredLighting/LightMaterial/QuadShadow":{"depth_check":false},"DeferredLighting/VPL":{"depth_write":false,"depth_check":true},"DeferredRendering/Shadows/Caster":{},"DeferredRendering/Shadows/RSMCaster_Directional":{},"DeferredRendering/Shadows/RSMCaster_Spot":{},"DeferredRendering/Shadows/RSMCaster_Spot1":{"texture":"rockwall.png"},"DeferredShading/AmbientLight":{"depth_write":true,"depth_check":true},"DeferredShading/LightMaterial/Geometry":{"depth_write":false,"depth_check":true},"DeferredShading/LightMaterial/GeometryShadow":{},"DeferredShading/LightMaterial/Quad":{"depth_check":false},"DeferredShading/LightMaterial/QuadShadow":{"depth_check":false},"DeferredShading/Post/SimpleQuad":{"depth_write":false,"depth_check":false,"texture":"white.png"},"DeferredShading/VPL":{"depth_write":false,"depth_check":true},"Dumpster/Diffuse":{"texture":"Dumpster_Diffuse.png"},"Dumpster/Specular":{"texture":"Dumpster_Spec.png"},"FNR_switch_F":{"ambient":[1,1,1,1],"texture":"FNR_switch_F.png"},"FNR_switch_R":{"ambient":[1,1,1,1],"texture":"FNR_switch_R.png"},"FastFood/Diffuse":{"texture":"FastFood_Diffuse.png"},"FastFood/Normal":{"texture":"FastFood_Normal.png"},"FastFood/Specular":{"texture":"FastFood_Spec.png"},"GasStation/Diffuse":{"texture":"GasStation_Diffuse.png"},"GasStation/Normal":{"texture":"GasStation_Normal.png"},"GasStation/Specular":{"texture":"GasStation_Spec.png"},"Gazebo/Black":{"ambient":[0,0,0,1],"diffuse":[0,0,0,1],"specular":[0.1,0.1,0.1,1,5]},"Gazebo/Blue":{"ambient":[0,0,1],"diffuse":[0,0,1],"specular":[0.1,0.1,0.1,1,1]},"Gazebo/BlueGlow":{},"Gazebo/BlueLaser":{"ambient":[0,0,1,1],"diffuse":[0,0,1,1],"depth_write":false,"opacity":0.4},"Gazebo/BlueTransparent":{"ambient":[0,0,1,1],"diffuse":[0,0,1,1],"depth_write":false,"opacity":0.5},"Gazebo/CeilingTiled":{"ambient":[0.5,0.5,0.5,1],"texture":"ceiling_tiled.png"},"Gazebo/CloudySky":{"depth_write":false,"texture":"clouds.png"},"Gazebo/DarkGrey":{"ambient":[0.175,0.175,0.175,1],"diffuse":[0.175,0.175,0.175,1],"specular":[0.175,0.175,0.175,1,1.5]},"Gazebo/DepthMap":{},"Gazebo/FlatBlack":{"ambient":[0.1,0.1,0.1],"diffuse":[0.1,0.1,0.1],"specular":[0.01,0.01,0.01,1,1]},"Gazebo/GaussianCameraNoise":{},"Gazebo/Gold":{"ambient":[0.4,0.24869,0.020759,1],"diffuse":[0.8,0.64869,0.120759,1],"specular":[0.4,0.4,0.4,1,12.5]},"Gazebo/Green":{"ambient":[0,1,0],"diffuse":[0,1,0],"specular":[0.1,0.1,0.1,1,1]},"Gazebo/GreenGlow":{},"Gazebo/GreenTransparent":{"ambient":[0,1,0,1],"diffuse":[0,1,0,1],"depth_write":false,"opacity":0.5},"Gazebo/Grey":{"ambient":[0.3,0.3,0.3,1],"diffuse":[0.7,0.7,0.7,1],"specular":[0.01,0.01,0.01,1,1.5]},"Gazebo/GreyGradientSky":{"depth_write":false,"texture":"grey_gradient.png"},"Gazebo/JointAnchor":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"specular":[1,1,1,1]},"Gazebo/LaserScan1st":{},"Gazebo/LaserScan2nd":{},"Gazebo/LightOff":{"ambient":[1,0,0],"diffuse":[1,0,0]},"Gazebo/LightOn":{"ambient":[0,1,0],"diffuse":[0,1,0]},"Gazebo/Orange":{"ambient":[1,0.5088,0.0468,1],"diffuse":[1,0.5088,0.0468,1],"specular":[0.5,0.5,0.5,128]},"Gazebo/OrangeTransparent":{"ambient":[1,0.44,0,1],"diffuse":[1,0.44,0,1],"depth_write":false,"opacity":0.4},"Gazebo/PaintedWall":{"ambient":[1,1,1,1],"texture":"paintedWall.png"},"Gazebo/Pioneer2Body":{"ambient":[0.481193,0.000123,0.000123,1],"diffuse":[0.681193,0.000923,0.000923,1],"specular":[0.5,0.5,0.5,1,12.5]},"Gazebo/PioneerBody":{"ambient":[0.5,0,0],"texture":"pioneerBody.png"},"Gazebo/Purple":{"ambient":[1,0,1],"diffuse":[1,0,1],"specular":[0.1,0.1,0.1,1,1]},"Gazebo/PurpleGlow":{},"Gazebo/Red":{"ambient":[1,0,0],"diffuse":[1,0,0],"specular":[0.1,0.1,0.1,1,1]},"Gazebo/RedGlow":{"ambient":[1,0,0],"diffuse":[1,0,0],"specular":[0,0,0,128]},"Gazebo/RedTransparent":{"depth_write":false,"opacity":0.5},"Gazebo/Road":{"ambient":[0.1,0.1,0.1,1],"diffuse":[0.8,0.8,0.8,1],"specular":[0.01,0.01,0.01,1,2],"texture":"road1.png"},"Gazebo/Turquoise":{"ambient":[0,1,1],"diffuse":[0,1,1],"specular":[0.1,0.1,0.1,1,1]},"Gazebo/TurquoiseGlow":{},"Gazebo/TurquoiseGlowOutline":{"diffuse":[0,1,1,1],"specular":[0.1,0.1,0.1,128]},"Gazebo/White":{"ambient":[1,1,1,1]},"Gazebo/WhiteGlow":{},"Gazebo/Wood":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"specular":[0.2,0.2,0.2,1,12.5],"texture":"wood.png"},"Gazebo/WoodFloor":{"ambient":[0.5,0.5,0.5,1],"texture":"hardwood_floor.png"},"Gazebo/WoodPallet":{"ambient":[0.5,0.5,0.5,1],"diffuse":[1,1,1,1],"specular":[0,0,0,1,0.5],"texture":"WoodPallet.png"},"Gazebo/XYZPoints":{},"Gazebo/Yellow":{"ambient":[1,1,0,1],"diffuse":[1,1,0,1],"specular":[0,0,0,0,0]},"Gazebo/YellowGlow":{},"Gazebo/YellowTransparent":{"ambient":[1,1,0,1],"diffuse":[1,1,0,1],"depth_write":false,"opacity":0.4},"House_1/Diffuse":{"texture":"House_1_Diffuse.png"},"House_1/Normal":{"texture":"House_1_Normal.png"},"House_1/Specular":{"texture":"House_1_Spec.png"},"House_2/Diffuse":{"texture":"House_2_Diffuse.png"},"House_3/Diffuse":{"texture":"House_3_Diffuse.png"},"Kitchen/Cabinet":{"ambient":[0.604,0.423,0.0313],"diffuse":[0.604,0.423,0.0313,1],"specular":[0.1,0.1,0.1,1,128]},"Kitchen/CounterTop":{"ambient":[1,1,1,1],"texture":"granite2.png"},"Kitchen/CounterTop_H":{"ambient":[1,1,1,1],"texture":"granite.png"},"Kitchen/Grass":{"ambient":[0.5,0.5,0.5,1],"texture":"grass.png"},"Kitchen/Wall":{"ambient":[1,1,1,1],"texture":"beigeWall.png"},"Kitchen/WoodFloor":{"ambient":[0.5,0.5,0.5,1],"texture":"hardwood_floor.png"},"Mailbox/Diffuse":{"texture":"Mailbox_Diffuse.png"},"Mailbox/Specular":{"texture":"Mailbox_Spec.png"},"Polaris/Diffuse":{"ambient":[1,1,1,1],"texture":"Ranger_Diffuse.png"},"PolarisXP900/Diffuse":{"ambient":[1,1,1,1],"texture":"RangerXP900_Diffuse.png"},"RTSS/Athene/NormalMapping_MultiPass":{},"RTSS/Athene/NormalMapping_SinglePass":{"texture":"egyptrockyfull.png"},"RTSS/NormalMapping_MultiPass":{"ambient":[1,1,1],"diffuse":[0,0,0],"specular":[0,0,0,0]},"RTSS/NormalMapping_MultiPass_2lights":{},"RTSS/NormalMapping_SinglePass":{"specular":[1,1,1,32],"texture":"Panels_Diffuse.png"},"RTSS/PerPixel_SinglePass":{"specular":[1,1,1,32],"texture":"Panels_Diffuse.png"},"RoboCup/Carpet":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"specular":[0.2,0.2,0.2,1,12.5],"texture":"carpet.png"},"RoboCup/FieldBorder":{"ambient":[0.2578,0.4023,0.1836],"diffuse":[0.2578,0.4023,0.1836],"specular":[0.1,0.1,0.1,1,1]},"RoboCup/Grass":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"specular":[0.2,0.2,0.2,1,12.5],"texture":"field.png"},"RoboCup/Net":{"depth_write":false,"texture":"net.png"},"SkyX_Lightning":{"depth_write":true,"depth_check":false},"SkyX_Moon":{"depth_write":false,"depth_check":false,"texture":"SkyX_Moon.png"},"SkyX_Skydome_HDR":{"depth_write":false,"depth_check":false},"SkyX_Skydome_LDR":{"depth_write":false,"depth_check":false},"SkyX_Skydome_STARFIELD_HDR":{"depth_write":false,"depth_check":false,"texture":"SkyX_Starfield.png"},"SkyX_Skydome_STARFIELD_LDR":{"depth_write":false,"depth_check":false,"texture":"SkyX_Starfield.png"},"SkyX_VolClouds":{"depth_write":false,"depth_check":true},"SkyX_VolClouds_Lightning":{"depth_write":false,"depth_check":true},"StartingPen/Floor":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"texture":"metal_ripped.png"},"StartingPen/FloorStripped":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"texture":"metal_stripped.png"},"StartingPen/OSRF":{"ambient":[1,1,1,1],"diffuse":[1,1,1,1],"texture":"osrf.png"},"StopSign/Diffuse":{"texture":"StopSign_Diffuse.png"},"StopSign/Specular":{"texture":"StopSign_Spec.png"},"Table/Marble_Lightmap":{"texture":"marble.png"},"blur":{},"drc/san_fauxcity_sign":{"ambient":[0.8,0.8,0.8,1],"diffuse":[0.8,0.8,0.8,1],"specular":[0.1,0.1,0.1,1,2],"texture":"san_fauxcity.png"},"fire_hose_long_curled/fire_hose_canvas":{"ambient":[0.7,0.7,0.7,1],"diffuse":[1,1,1,1],"specular":[0,0,0,0],"texture":"canvas.png"},"fire_hose_long_curled/fire_hose_coupling":{"ambient":[0.7,0.7,0.7,1],"diffuse":[1,1,1,1],"specular":[0,0,0,0],"texture":"coupling_hexagon.png"},"fire_hose_long_curled/fire_hose_red_coupling":{"ambient":[0.7,0.7,0.7,1],"diffuse":[1,1,1,1],"specular":[0,0,0,0],"texture":"connector.png"},"gazebo/plain_color":{},"grid":{},"modulate":{"texture":"white.png"},"ssao":{},"ssaoBlurX":{},"ssaoBlurY":{},"vrc/asphalt":{"ambient":[0.5,0.5,0.5,1],"diffuse":[0.5,0.5,0.5,1],"specular":[0.2,0.2,0.2,1,12.5],"texture":"tarmac.png"},"vrc/grey_wall":{"texture":"grey_wall.png"},"vrc/mud":{"ambient":[0.5,0.5,0.5,1],"diffuse":[0.5,0.5,0.5,1],"specular":[0.2,0.2,0.2,1,12.5],"texture":"mud_soft_leaves.png"},"youbot/DarkGrey":{"ambient":[0.033,0.033,0.033,1],"diffuse":[1,1,1,1],"specular":[0.8,0.8,0.8,1]},"youbot/Grey":{"ambient":[0.1,0.1,0.1,1],"diffuse":[0.7,0.7,0.7,1],"specular":[0.8,0.8,0.8,1]},"youbot/Orange":{"ambient":[1,0.4,0,1],"diffuse":[1,0.4,0,1],"specular":[1,0.4,0,1]}}';
+  var jsonObject = JSON.parse(jsonStr);
+  return jsonObject;
+};
+
+GZ3D.SdfParser.prototype.loadModel = function(modelName)
+{
+  var modelFile = this.MATERIAL_ROOT + modelName + '/model.sdf';
+  
+  var xhttp = new XMLHttpRequest();
+  xhttp.overrideMimeType('text/xml');
+  xhttp.open('GET', modelFile, false);
+  xhttp.send();
+  return xhttp.responseXML;
+};
+
 /**
  * Spawn a model into the scene
  * @constructor
@@ -6044,6 +6385,7 @@ GZ3D.SpawnModel = function(scene, domElement)
   this.init();
   this.obj = undefined;
   this.callback = undefined;
+  this.sdfParser = undefined;
 };
 
 /**
@@ -6103,7 +6445,8 @@ GZ3D.SpawnModel.prototype.start = function(entity, callback)
   else
   {
     // temp box for now
-    mesh = this.scene.createBox(1, 1, 1);
+    mesh = this.sdfParser.loadSDF(entity);
+//    mesh = this.scene.createBox(1, 1, 1);
   }
 
   this.obj.name = this.generateUniqueName(entity);
