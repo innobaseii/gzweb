@@ -585,6 +585,7 @@ gzangular.controller('treeControl', ['$scope', function($scope)
     $scope.models = modelStats;
     $scope.lights = lightStats;
     $scope.scene = sceneStats;
+    $scope.physics = physicsStats;
     if (!$scope.$$phase)
     {
       $scope.$apply();
@@ -1414,6 +1415,27 @@ GZ3D.Gui.prototype.setSceneStats = function(stats)
   sceneStats['background'] = formatted.background;
 };
 
+var physicsStats = {};
+/**
+ * Update physics stats on scene tree
+ * @param {} stats
+ */
+GZ3D.Gui.prototype.setPhysicsStats = function(stats)
+{
+  physicsStats = stats;
+  physicsStats['enable_physics'] = this.trueOrFalse(
+      physicsStats['enable_physics']);
+  physicsStats['max_step_size'] = this.round(physicsStats['max_step_size']);
+  physicsStats['gravity'] = this.round(physicsStats['gravity']);
+  physicsStats['sor'] = this.round(physicsStats['sor']);
+  physicsStats['cfm'] = this.round(physicsStats['cfm']);
+  physicsStats['erp'] = this.round(physicsStats['erp']);
+  physicsStats['contact_max_correcting_vel'] = this.round(
+      physicsStats['contact_max_correcting_vel']);
+  physicsStats['contact_surface_layer'] = this.round(
+      physicsStats['contact_surface_layer']);
+};
+
 var modelStats = [];
 /**
  * Update model stats on property panel
@@ -1874,7 +1896,6 @@ GZ3D.Gui.prototype.formatStats = function(stats)
     }
     color.specular = '#' + colorHex['r'] + colorHex['g'] + colorHex['b'];
   }
-
   var attenuation;
   if (stats.attenuation)
   {
@@ -1918,24 +1939,33 @@ GZ3D.Gui.prototype.formatStats = function(stats)
 };
 
 /**
- * Round all number children and format color
+ * Round numbers to 3 decimals and format colors
  * @param {} stats
  * @returns stats
  */
 GZ3D.Gui.prototype.round = function(stats)
 {
-  for (var key in stats)
+  if (typeof stats === 'number')
   {
-    if (typeof stats[key] === 'number')
+    stats = parseFloat(Math.round(stats * 1000) / 1000)
+            .toFixed(3);
+  }
+  else
+  {
+    for (var key in stats)
     {
-      if (key === 'r' || key === 'g' || key === 'b' || key === 'a')
+      if (typeof stats[key] === 'number')
       {
-        stats[key] = Math.round(stats[key] * 255);
-      }
-      else
-      {
-        stats[key] = Math.round(stats[key] * 1000) / 1000;
-        //stats[key] = parseFloat(Math.round(stats[key] * 1000) / 1000).toFixed(3);
+        if (key === 'r' || key === 'g' || key === 'b' || key === 'a')
+        {
+          stats[key] = Math.round(stats[key] * 255);
+        }
+        else
+        {
+          stats[key] = Math.round(stats[key]*1000)/1000;
+        //stats[key] = parseFloat(Math.round(stats[key]*1000)/1000)
+        //    .toFixed(3);
+        }
       }
     }
   }
