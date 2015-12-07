@@ -50,7 +50,8 @@ GazeboInterface::GazeboInterface()
   this->modelTopic = "~/model/info";
   this->poseTopic = "~/pose/info";
   this->requestTopic = "~/request";
-  this->lightTopic = "~/light";
+  this->lightFactoryTopic = "~/factory/light";
+  this->lightModifyTopic = "~/light/modify";
   this->linkTopic = "~/link";
   this->sceneTopic = "~/scene";
   this->physicsTopic = "~/physics";
@@ -87,8 +88,10 @@ GazeboInterface::GazeboInterface()
       &GazeboInterface::OnRequest, this);
 
   // For lights
-  this->lightSub = this->node->Subscribe(this->lightTopic,
-      &GazeboInterface::OnLightMsg, this);
+  this->lightModifySub = this->node->Subscribe(this->lightModifyTopic,
+      &GazeboInterface::OnLightModifyMsg, this);
+  this->lightFactorySub = this->node->Subscribe(this->lightFactoryTopic,
+      &GazeboInterface::OnLightFactoryMsg, this);
 
   this->sceneSub = this->node->Subscribe(this->sceneTopic,
       &GazeboInterface::OnScene, this);
@@ -111,8 +114,10 @@ GazeboInterface::GazeboInterface()
       this->node->Advertise<gazebo::msgs::Model>(this->modelModifyTopic);
 
   // For modifying lights
-  this->lightPub =
-      this->node->Advertise<gazebo::msgs::Light>(this->lightTopic);
+  this->lightModifyPub =
+      this->node->Advertise<gazebo::msgs::Light>(this->lightModifyTopic);
+  this->lightFactoryPub =
+      this->node->Advertise<gazebo::msgs::Light>(this->lightFactoryTopic);
 
   // For spawning models
   this->factoryPub =
@@ -157,7 +162,8 @@ GazeboInterface::~GazeboInterface()
   this->modelMsgs.clear();
   this->poseMsgs.clear();
   this->requestMsgs.clear();
-  this->lightMsgs.clear();
+  this->lightModifyMsgs.clear();
+  this->lightFactoryMsgs.clear();
   this->visualMsgs.clear();
   this->sceneMsgs.clear();
   this->physicsMsgs.clear();
@@ -166,13 +172,15 @@ GazeboInterface::~GazeboInterface()
 
   this->sensorSub.reset();
   this->visSub.reset();
-  this->lightSub.reset();
+  this->lightModifySub.reset();
+  this->lightFactorySub.reset();
   this->sceneSub.reset();
   this->jointSub.reset();
   this->modelInfoSub.reset();
   this->requestPub.reset();
   this->modelPub.reset();
-  this->lightPub.reset();
+  this->lightModifyPub.reset();
+  this->lightFactoryPub.reset();
   this->responseSub.reset();
   this->node.reset();
 
@@ -320,13 +328,10 @@ void GazeboInterface::ProcessMessages()
 
           this->modelPub->Publish(modelMsg);
         }
-        else if (topic == this->lightTopic)
+        else if (topic == this->lightModifyTopic)
         {
           std::string name = get_value(msg, "msg:name");
           std::string type = get_value(msg, "msg:type");
-          // createEntity = 1: create new light
-          // createEntity = 0: modify existing light
-          std::string createEntity = get_value(msg, "msg:createEntity");
 
           if (name == "")
             continue;
@@ -346,64 +351,86 @@ void GazeboInterface::ProcessMessages()
           ignition::math::Pose3d pose(pos, quat);
           gazebo::msgs::Set(lightMsg.mutable_pose(), pose);
 
-          if (createEntity.compare("0") == 0)
+          ignition::math::Vector3d direction(
+            atof(get_value(msg, "msg:direction:x").c_str()),
+            atof(get_value(msg, "msg:direction:y").c_str()),
+            atof(get_value(msg, "msg:direction:z").c_str()));
+          gazebo::msgs::Set(lightMsg.mutable_direction(), direction);
+
+          gazebo::common::Color diffuse(
+              atof(get_value(msg, "msg:diffuse:r").c_str()),
+              atof(get_value(msg, "msg:diffuse:g").c_str()),
+              atof(get_value(msg, "msg:diffuse:b").c_str()), 1);
+          gazebo::msgs::Set(lightMsg.mutable_diffuse(), diffuse);
+
+          gazebo::common::Color specular(
+              atof(get_value(msg, "msg:specular:r").c_str()),
+              atof(get_value(msg, "msg:specular:g").c_str()),
+              atof(get_value(msg, "msg:specular:b").c_str()), 1);
+          gazebo::msgs::Set(lightMsg.mutable_specular(), specular);
+
+          lightMsg.set_range(atof(get_value(msg, "msg:range").c_str()));
+          lightMsg.set_attenuation_constant(atof(
+              get_value(msg, "msg:attenuation_constant").c_str()));
+          lightMsg.set_attenuation_linear(atof(
+              get_value(msg, "msg:attenuation_linear").c_str()));
+          lightMsg.set_attenuation_quadratic(atof(
+              get_value(msg, "msg:attenuation_quadratic").c_str()));
+
+std::cout << "pub mod 1" << std::endl;
+          this->lightModifyPub->Publish(lightMsg);
+        }
+        else if (topic == this->lightFactoryTopic)
+        {
+          std::string name = get_value(msg, "msg:name");
+          std::string type = get_value(msg, "msg:type");
+
+          if (name == "")
+            continue;
+
+          gazebo::msgs::Light lightMsg;
+          lightMsg.set_name(name);
+
+          ignition::math::Vector3d pos(
+              atof(get_value(msg, "msg:position:x").c_str()),
+              atof(get_value(msg, "msg:position:y").c_str()),
+              atof(get_value(msg, "msg:position:z").c_str()));
+          ignition::math::Quaterniond quat(
+              atof(get_value(msg, "msg:orientation:w").c_str()),
+              atof(get_value(msg, "msg:orientation:x").c_str()),
+              atof(get_value(msg, "msg:orientation:y").c_str()),
+              atof(get_value(msg, "msg:orientation:z").c_str()));
+          ignition::math::Pose3d pose(pos, quat);
+          gazebo::msgs::Set(lightMsg.mutable_pose(), pose);
+
+          if (type.compare("pointlight") == 0)
           {
-            ignition::math::Vector3d direction(
-              atof(get_value(msg, "msg:direction:x").c_str()),
-              atof(get_value(msg, "msg:direction:y").c_str()),
-              atof(get_value(msg, "msg:direction:z").c_str()));
-            gazebo::msgs::Set(lightMsg.mutable_direction(), direction);
-
-            gazebo::common::Color diffuse(
-                atof(get_value(msg, "msg:diffuse:r").c_str()),
-                atof(get_value(msg, "msg:diffuse:g").c_str()),
-                atof(get_value(msg, "msg:diffuse:b").c_str()), 1);
-            gazebo::msgs::Set(lightMsg.mutable_diffuse(), diffuse);
-
-            gazebo::common::Color specular(
-                atof(get_value(msg, "msg:specular:r").c_str()),
-                atof(get_value(msg, "msg:specular:g").c_str()),
-                atof(get_value(msg, "msg:specular:b").c_str()), 1);
-            gazebo::msgs::Set(lightMsg.mutable_specular(), specular);
-
-            lightMsg.set_range(atof(get_value(msg, "msg:range").c_str()));
-            lightMsg.set_attenuation_constant(atof(
-                get_value(msg, "msg:attenuation_constant").c_str()));
-            lightMsg.set_attenuation_linear(atof(
-                get_value(msg, "msg:attenuation_linear").c_str()));
-            lightMsg.set_attenuation_quadratic(atof(
-                get_value(msg, "msg:attenuation_quadratic").c_str()));
+            lightMsg.set_type(gazebo::msgs::Light::POINT);
           }
-          else
+          else if (type.compare("spotlight") == 0)
           {
-            if (type.compare("pointlight") == 0)
-            {
-              lightMsg.set_type(gazebo::msgs::Light::POINT);
-            }
-            else if (type.compare("spotlight") == 0)
-            {
-              lightMsg.set_type(gazebo::msgs::Light::SPOT);
-              gazebo::msgs::Set(lightMsg.mutable_direction(),
-                  ignition::math::Vector3d(0,0,-1));
-            }
-            else if (type.compare("directionallight") == 0)
-            {
-              lightMsg.set_type(gazebo::msgs::Light::DIRECTIONAL);
-              gazebo::msgs::Set(lightMsg.mutable_direction(),
-                  ignition::math::Vector3d(0,0,-1));
-            }
-
-            gazebo::msgs::Set(lightMsg.mutable_diffuse(),
-                gazebo::common::Color(0.5, 0.5, 0.5, 1));
-            gazebo::msgs::Set(lightMsg.mutable_specular(),
-                gazebo::common::Color(0.1, 0.1, 0.1, 1));
-            lightMsg.set_attenuation_constant(0.5);
-            lightMsg.set_attenuation_linear(0.01);
-            lightMsg.set_attenuation_quadratic(0.001);
-            lightMsg.set_range(20);
+            lightMsg.set_type(gazebo::msgs::Light::SPOT);
+            gazebo::msgs::Set(lightMsg.mutable_direction(),
+                ignition::math::Vector3d(0,0,-1));
+          }
+          else if (type.compare("directionallight") == 0)
+          {
+            lightMsg.set_type(gazebo::msgs::Light::DIRECTIONAL);
+            gazebo::msgs::Set(lightMsg.mutable_direction(),
+                ignition::math::Vector3d(0,0,-1));
           }
 
-          this->lightPub->Publish(lightMsg);
+          gazebo::msgs::Set(lightMsg.mutable_diffuse(),
+              gazebo::common::Color(0.5, 0.5, 0.5, 1));
+          gazebo::msgs::Set(lightMsg.mutable_specular(),
+              gazebo::common::Color(0.1, 0.1, 0.1, 1));
+          lightMsg.set_attenuation_constant(0.5);
+          lightMsg.set_attenuation_linear(0.01);
+          lightMsg.set_attenuation_quadratic(0.001);
+          lightMsg.set_range(20);
+
+std::cout << "pub fac 1" << std::endl;
+          this->lightFactoryPub->Publish(lightMsg);
         }
         else if (topic == this->linkTopic)
         {
@@ -640,14 +667,24 @@ void GazeboInterface::ProcessMessages()
     this->sensorMsgs.clear();
 
     // Forward the light messages.
-    for (lightIter = this->lightMsgs.begin();
-        lightIter != this->lightMsgs.end(); ++lightIter)
+    for (lightIter = this->lightFactoryMsgs.begin();
+        lightIter != this->lightFactoryMsgs.end(); ++lightIter)
     {
-      msg = this->PackOutgoingTopicMsg(this->lightTopic,
+      msg = this->PackOutgoingTopicMsg(this->lightFactoryTopic,
           pb2json(*(*lightIter).get()));
       this->Send(msg);
     }
-    this->lightMsgs.clear();
+    this->lightFactoryMsgs.clear();
+
+    // Forward the light messages.
+    for (lightIter = this->lightModifyMsgs.begin();
+        lightIter != this->lightModifyMsgs.end(); ++lightIter)
+    {
+      msg = this->PackOutgoingTopicMsg(this->lightModifyTopic,
+          pb2json(*(*lightIter).get()));
+      this->Send(msg);
+    }
+    this->lightModifyMsgs.clear();
 
     // Forward the visual messages.
     for (visualIter = this->visualMsgs.begin();
@@ -910,13 +947,25 @@ void GazeboInterface::OnResponse(ConstResponsePtr &_msg)
 }
 
 /////////////////////////////////////////////////
-void GazeboInterface::OnLightMsg(ConstLightPtr &_msg)
+void GazeboInterface::OnLightFactoryMsg(ConstLightPtr &_msg)
 {
+std::cout << "GazeboInterface::OnLightFactoryMsg" << std::endl;
   if (!this->IsConnected())
     return;
 
   boost::recursive_mutex::scoped_lock lock(*this->receiveMutex);
-  this->lightMsgs.push_back(_msg);
+  this->lightFactoryMsgs.push_back(_msg);
+}
+
+/////////////////////////////////////////////////
+void GazeboInterface::OnLightModifyMsg(ConstLightPtr &_msg)
+{
+std::cout << "GazeboInterface::OnLightModifyMsg" << std::endl;
+  if (!this->IsConnected())
+    return;
+
+  boost::recursive_mutex::scoped_lock lock(*this->receiveMutex);
+  this->lightModifyMsgs.push_back(_msg);
 }
 
 /////////////////////////////////////////////////
