@@ -309,6 +309,18 @@ GZ3D.Scene.prototype.init = function()
   ballVisual.add(mesh);
 
   this.jointAxis['ballVisual'] = ballVisual;
+
+  // center of mass visual
+  this.COMvisual = new THREE.Object3D();
+
+  geometry = new THREE.SphereGeometry(1, 32, 32);
+
+  mesh = new THREE.Mesh(geometry);
+  this.setMaterial(mesh, {'ambient':[0.5,0.5,0.5,1.000000],'texture':'assets/media/materials/textures/com.png'});
+  mesh.position.x = 0.15;
+  mesh.rotation.z = -Math.PI/2;
+  mesh.name = 'COM_VISUAL';
+  this.COMvisual.add(mesh);
 };
 
 GZ3D.Scene.prototype.initScene = function()
@@ -2186,6 +2198,143 @@ GZ3D.Scene.prototype.viewJoints = function(model)
         rotMatrix.lookAt(direction, new THREE.Vector3(0, 0, 0), secondAxis.up);
         secondAxis.quaternion.setFromRotationMatrix(rotMatrix);
       }
+    }
+  }
+};
+
+/**
+ * View Center Of Mass
+ * Toggle: if there are COM visuals, hide, otherwise, show.
+ * @param {} model
+ */
+GZ3D.Scene.prototype.viewCOM = function(model)
+{
+  if (model.children.length === 0)
+  {
+    return;
+  }
+
+  var child;
+
+  // Visuals already exist
+  if (model.COMVisuals)
+  {
+    // Hide = remove from parent
+    if (model.COMVisuals[0].parent !== undefined && model.COMVisuals[0].parent !== null)
+    {
+      for (var v = 0; v < model.COMVisuals.length; ++v)
+      {
+        for (var k = 0; k < 3; k++)
+        {
+          model.COMVisuals[v].parent.remove(model.COMVisuals[v].crossLines[k]);
+        }
+        model.COMVisuals[v].parent.remove(model.COMVisuals[v]);
+      }
+    }
+    // Show: attach to parent
+    else
+    {
+      for (var s = 0; s < model.children.length; ++s)
+      {
+        child = model.getObjectByName(model.children[s].name);
+
+        if (!child || child.name === 'boundingBox')
+        {
+          continue;
+        }
+
+        child.add(model.COMVisuals[s]);
+        child.add(model.COMVisuals[s].crossLines[0]);
+        child.add(model.COMVisuals[s].crossLines[1]);
+        child.add(model.COMVisuals[s].crossLines[2]);
+      }
+    }
+  }
+  // Create visuals
+  else
+  {
+    model.COMVisuals = [];
+    var box, line_1, line_2, line_3, helperGeometry_1,
+    helperGeometry_2, helperGeometry_3, helperMaterial, points = new Array(6);
+    for (var j = 0; j < model.children.length; ++j)
+    {
+      child = model.getObjectByName(model.children[j].name);
+
+      if (!child)
+      {
+        continue;
+      }
+
+      if (child.userData.inertial)
+      {
+        var mesh, radius, inertialMass, inertialPose = {};
+        var inertial = child.userData.inertial;
+
+        inertialPose = child.userData.inertial.pose;
+        if (inertialPose === undefined)
+        {
+          inertialPose.position = child.position;
+          inertialPose.orientation = child.quaternion;
+        }
+
+        inertialMass = child.userData.inertial.mass;
+
+        // calculate the radius using lead density
+        radius = Math.cbrt((0.75 * inertialMass ) / (Math.PI * 11340));
+
+        var COMVisual = this.COMvisual.clone();
+        child.add(COMVisual);
+        model.COMVisuals.push(COMVisual);
+        COMVisual.scale.set(radius, radius, radius);
+
+        COMVisual.crossLines = [];
+        box = new THREE.Box3();
+        // w.r.t. world
+        box.setFromObject(child);
+        // center vertices with object
+        box.min.x = box.min.x - model.position.x;
+        box.min.y = box.min.y - model.position.y;
+        box.min.z = box.min.z - model.position.z;
+        box.max.x = box.max.x - model.position.x;
+        box.max.y = box.max.y - model.position.y;
+        box.max.z = box.max.z - model.position.z;
+
+        points[0] = new THREE.Vector3(inertialPose.position.x, inertialPose.position.y, box.min.z);
+        points[1] = new THREE.Vector3(inertialPose.position.x, inertialPose.position.y, box.max.z);
+        points[2] = new THREE.Vector3(inertialPose.position.x, box.min.y, inertialPose.position.z);
+        points[3] = new THREE.Vector3(inertialPose.position.x, box.max.y, inertialPose.position.z);
+        points[4] = new THREE.Vector3(box.min.x, inertialPose.position.y, inertialPose.position.z);
+        points[5] = new THREE.Vector3(box.max.x, inertialPose.position.y, inertialPose.position.z);
+
+        helperGeometry_1 = new THREE.Geometry();
+        helperGeometry_1.vertices.push(points[0]);
+        helperGeometry_1.vertices.push(points[1]);
+
+        helperGeometry_2 = new THREE.Geometry();
+        helperGeometry_2.vertices.push(points[2]);
+        helperGeometry_2.vertices.push(points[3]);
+
+        helperGeometry_3 = new THREE.Geometry();
+        helperGeometry_3.vertices.push(points[4]);
+        helperGeometry_3.vertices.push(points[5]);
+
+        helperMaterial = new THREE.LineBasicMaterial({color: 0x00ff00});
+        line_1 = new THREE.Line(helperGeometry_1, helperMaterial,
+            THREE.LineSegments);
+        line_2 = new THREE.Line(helperGeometry_2, helperMaterial,
+            THREE.LineSegments);
+        line_3 = new THREE.Line(helperGeometry_3, helperMaterial,
+            THREE.LineSegments);
+
+        COMVisual.crossLines.push(line_1);
+        COMVisual.crossLines.push(line_2);
+        COMVisual.crossLines.push(line_3);
+
+        // show lines
+        child.add(line_1);
+        child.add(line_2);
+        child.add(line_3);
+       }
     }
   }
 };
