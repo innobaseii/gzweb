@@ -468,9 +468,11 @@ GZ3D.GZIface.prototype.onConnected = function()
       };
       entityMsg.direction = entity.direction;
       entityMsg.range = entity.children[0].distance;
-      entityMsg.attenuation_constant = entity.serverProperties.attenuation_constant;
+      entityMsg.attenuation_constant =
+        entity.serverProperties.attenuation_constant;
       entityMsg.attenuation_linear = entity.serverProperties.attenuation_linear;
-      entityMsg.attenuation_quadratic = entity.serverProperties.attenuation_quadratic;
+      entityMsg.attenuation_quadratic =
+        entity.serverProperties.attenuation_quadratic;
 
       that.lightModifyTopic.publish(entityMsg);
     }
@@ -759,7 +761,8 @@ GZ3D.GZIface.prototype.createLightFromMsg = function(light)
   }
 
   // equation taken from
-  // http://wiki.blender.org/index.php/Doc:2.6/Manual/Lighting/Lights/Light_Attenuation
+  // eslint-disable-next-line
+  // https://docs.blender.org/manual/en/dev/render/blender_render/lighting/lights/light_attenuation.html
   var E = 1;
   var D = 1;
   var r = 1;
@@ -921,7 +924,7 @@ GZ3D.GZIface.prototype.createGeom = function(geom, material, parent)
         var materialName = parent.name + '::' + modelUri;
         this.entityMaterial[materialName] = mat;
 
-        this.scene.loadMesh(modelUri, submesh,
+        this.scene.loadMesh(undefined, modelUri, submesh,
             centerSubmesh, function(dae) {
               if (that.entityMaterial[materialName])
               {
