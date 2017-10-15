@@ -32,7 +32,8 @@ var tabColors = {selected: 'rgb(34, 170, 221)', unselected: 'rgb(42, 42, 42)'};
 var modelList =
   [
     {path:'buildings', title:'Buildings',
-    examplePath1:'fast_food', examplePath2:'kitchen_dining', examplePath3:'house_1', models:
+    examplePath1:'fast_food', examplePath2:'kitchen_dining',
+      examplePath3:'house_1', models:
     [
       {modelPath:'fast_food', modelTitle:'Fast Food'},
       {modelPath:'gas_station', modelTitle:'Gas Station'},
@@ -54,7 +55,8 @@ var modelList =
     ]},
 
     {path:'furniture', title:'Furniture',
-    examplePath1:'hinged_door', examplePath2:'bookshelf', examplePath3:'table', models:
+    examplePath1:'hinged_door', examplePath2:'bookshelf', examplePath3:'table',
+      models:
     [
       {modelPath:'bookshelf', modelTitle:'Book Shelf'},
       {modelPath:'cabinet', modelTitle:'Cabinet'},
@@ -66,31 +68,42 @@ var modelList =
       {modelPath:'cafe_table', modelTitle:'Cafe table'},
 
       {modelPath:'drc_practice_ball_valve', modelTitle:'Ball Valve'},
-      {modelPath:'drc_practice_handle_wheel_valve', modelTitle:'Handle Wheel Valve'},
-      {modelPath:'drc_practice_hand_wheel_valve', modelTitle:'Hand Wheel Valve'},
-      {modelPath:'drc_practice_wheel_valve', modelTitle:'Wheel Valve'},
-      {modelPath:'drc_practice_wheel_valve_large', modelTitle:'Wheel Valve Large'},
+      {modelPath:'drc_practice_handle_wheel_valve',
+        modelTitle:'Handle Wheel Valve'},
+      {modelPath:'drc_practice_hand_wheel_valve',
+        modelTitle:'Hand Wheel Valve'},
+      {modelPath:'drc_practice_wheel_valve',
+        modelTitle:'Wheel Valve'},
+      {modelPath:'drc_practice_wheel_valve_large',
+        modelTitle:'Wheel Valve Large'},
       {modelPath:'door_handle', modelTitle:'Door Handle'},
 
-      {modelPath:'drc_practice_ball_valve_wall', modelTitle:'Wall (Ball Valve)'},
-      {modelPath:'drc_practice_handle_wheel_valve_wall', modelTitle:'Wall (Handle Wheel Valve)'},
-      {modelPath:'drc_practice_hand_wheel_valve_wall', modelTitle:'Wall (Hand Wheel Valve)'},
+      {modelPath:'drc_practice_ball_valve_wall',
+        modelTitle:'Wall (Ball Valve)'},
+      {modelPath:'drc_practice_handle_wheel_valve_wall',
+        modelTitle:'Wall (Handle Wheel Valve)'},
+      {modelPath:'drc_practice_hand_wheel_valve_wall',
+        modelTitle:'Wall (Hand Wheel Valve)'},
       {modelPath:'drc_practice_valve_wall', modelTitle:'Wall (Valve)'},
-      {modelPath:'drc_practice_wheel_valve_wall', modelTitle:'Wall (Wheel Valve)'},
-      {modelPath:'drc_practice_wheel_valve_large_wall', modelTitle:'Wall (Wheel Valve Large)'},
+      {modelPath:'drc_practice_wheel_valve_wall',
+        modelTitle:'Wall (Wheel Valve)'},
+      {modelPath:'drc_practice_wheel_valve_large_wall',
+        modelTitle:'Wall (Wheel Valve Large)'},
       {modelPath:'grey_wall', modelTitle:'Grey Wall'},
       {modelPath:'asphalt_plane', modelTitle:'Asphalt Plane'},
       {modelPath:'drc_practice_base_4x8', modelTitle:'Debris base'},
       {modelPath:'ground_plane', modelTitle:'Ground Plane'},
       {modelPath:'nist_maze_wall_120', modelTitle:'120 Maze Wall'},
       {modelPath:'nist_maze_wall_240', modelTitle:'240 Maze Wall'},
-      {modelPath:'nist_maze_wall_triple_holes_120', modelTitle:'120 Maze Wall Triple Holes'},
+      {modelPath:'nist_maze_wall_triple_holes_120',
+        modelTitle:'120 Maze Wall Triple Holes'},
       {modelPath:'nist_simple_ramp_120', modelTitle:'Simple Ramp'},
       {modelPath:'nist_stairs_120', modelTitle:'Stairs'}
     ]},
 
     {path:'kitchen', title:'Kitchen',
-    examplePath1:'saucepan',  examplePath2:'beer',  examplePath3:'bowl', models:
+    examplePath1:'saucepan',  examplePath2:'beer',  examplePath3:'bowl',
+      models:
     [
       {modelPath:'beer', modelTitle:'Beer'},
       {modelPath:'bowl', modelTitle:'Bowl'},
@@ -100,7 +113,8 @@ var modelList =
     ]},
 
     {path:'robocup', title:'Robocup', examplePath1:'robocup_3Dsim_ball',
-    examplePath2:'robocup14_spl_goal', examplePath3:'robocup09_spl_field', models:
+    examplePath2:'robocup14_spl_goal', examplePath3:'robocup09_spl_field',
+      models:
     [
       {modelPath:'robocup09_spl_field', modelTitle:'2009 SPL Field'},
       {modelPath:'robocup14_spl_field', modelTitle:'2014 SPL Field'},
@@ -112,7 +126,8 @@ var modelList =
     ]},
 
     {path:'first', title:'FIRST', examplePath1:'frc2016_field',
-    examplePath2:'frc2016_chevaldefrise', examplePath3:'frc_field_2015', models:
+    examplePath2:'frc2016_chevaldefrise', examplePath3:'frc_field_2015',
+      models:
     [
       {modelPath:'frc2016_chevaldefrise', modelTitle:'Cheval de Frise'},
       {modelPath:'frc2016_drawbridge', modelTitle:'Draw Bridge'},
@@ -128,7 +143,8 @@ var modelList =
     ]},
 
     {path:'robots', title:'Robots',
-    examplePath1:'pioneer3at', examplePath2:'turtlebot', examplePath3:'pr2', models:
+    examplePath1:'pioneer3at', examplePath2:'turtlebot', examplePath3:'pr2',
+      models:
     [
       {modelPath:'create', modelTitle:'Create'},
       {modelPath:'husky', modelTitle:'Husky'},
@@ -147,7 +163,8 @@ var modelList =
       {modelPath:'cessna', modelTitle:'Cessna'},
       {modelPath:'follower_vehicle', modelTitle:'Follower Vehicle'},
       {modelPath:'iris_with_standoffs', modelTitle:'Iris with Standoffs'},
-      {modelPath:'iris_with_standoffs_demo', modelTitle:'Iris with Standoffs (demo)'},
+      {modelPath:'iris_with_standoffs_demo',
+        modelTitle:'Iris with Standoffs (demo)'},
       {modelPath:'mpl_right_arm', modelTitle:'MPL right arm'},
       {modelPath:'mpl_right_forearm', modelTitle:'MPL right forearm'},
       {modelPath:'parrot_bebop_2', modelTitle:'Parrot Bebop 2'},
@@ -160,7 +177,8 @@ var modelList =
     ]},
 
     {path:'sensors', title:'Sensors',
-    examplePath1:'camera', examplePath2:'hokuyo', examplePath3:'kinect', models:
+    examplePath1:'camera', examplePath2:'hokuyo', examplePath3:'kinect',
+      models:
     [
       {modelPath:'camera', modelTitle:'Camera'},
       {modelPath:'stereo_camera', modelTitle:'Stereo Camera'},
@@ -172,20 +190,26 @@ var modelList =
     ]},
 
     {path:'street', title:'Street', examplePath1:'dumpster',
-    examplePath2:'drc_practice_angled_barrier_45', examplePath3:'fire_hydrant', models:
+    examplePath2:'drc_practice_angled_barrier_45', examplePath3:'fire_hydrant',
+      models:
     [
       {modelPath:'cinder_block', modelTitle:'Cinder Block'},
       {modelPath:'cinder_block_2', modelTitle:'Cinder Block 2'},
       {modelPath:'cinder_block_wide', modelTitle:'Cinder Block Wide'},
       {modelPath:'construction_barrel', modelTitle:'Construction Barrel'},
       {modelPath:'construction_cone', modelTitle:'Construction Cone'},
-      {modelPath:'drc_practice_angled_barrier_45', modelTitle:'Angled Barrier 45'},
-      {modelPath:'drc_practice_angled_barrier_135', modelTitle:'Angled Barrier 135'},
+      {modelPath:'drc_practice_angled_barrier_45',
+        modelTitle:'Angled Barrier 45'},
+      {modelPath:'drc_practice_angled_barrier_135',
+        modelTitle:'Angled Barrier 135'},
       {modelPath:'drc_practice_block_wall', modelTitle:'Block Wall'},
-      {modelPath:'drc_practice_orange_jersey_barrier', modelTitle:'Jersey Barrier (Orange)'},
-      {modelPath:'drc_practice_white_jersey_barrier', modelTitle:'Jersey Barrier (White)'},
+      {modelPath:'drc_practice_orange_jersey_barrier',
+        modelTitle:'Jersey Barrier (Orange)'},
+      {modelPath:'drc_practice_white_jersey_barrier',
+        modelTitle:'Jersey Barrier (White)'},
       {modelPath:'drc_practice_truss', modelTitle:'Truss'},
-      {modelPath:'drc_practice_yellow_parking_block', modelTitle:'Parking Block'},
+      {modelPath:'drc_practice_yellow_parking_block',
+        modelTitle:'Parking Block'},
       {modelPath:'dumpster', modelTitle:'Dumpster'},
       {modelPath:'fire_hydrant', modelTitle:'Fire Hydrant'},
       {modelPath:'jersey_barrier', modelTitle:'Jersey Barrier'},
@@ -210,7 +234,8 @@ var modelList =
       {modelPath:'monkey_wrench', modelTitle:'Monkey Wrench'},
       {modelPath:'polaris_ranger_ev', modelTitle:'Polaris Ranger EV'},
       {modelPath:'polaris_ranger_xp900', modelTitle:'Polaris Ranger XP900'},
-      {modelPath:'polaris_ranger_xp900_no_roll_cage', modelTitle:'Polaris Ranger without roll cage'},
+      {modelPath:'polaris_ranger_xp900_no_roll_cage',
+        modelTitle:'Polaris Ranger without roll cage'},
       {modelPath:'utility_cart', modelTitle:'Utility Cart'},
       {modelPath:'car_wheel', modelTitle:'Car Wheel'},
       {modelPath:'arm_part', modelTitle:'Arm Part'},
@@ -224,9 +249,11 @@ var modelList =
     ]},
 
     {path:'misc', title:'Misc.', examplePath1:'brick_box_3x1x3',
-    examplePath2:'drc_practice_4x4x20', examplePath3:'double_pendulum_with_base', models:
+    examplePath2:'drc_practice_4x4x20',
+      examplePath3:'double_pendulum_with_base', models:
     [
-      {modelPath:'double_pendulum_with_base', modelTitle:'Double Pendulum With Base'},
+      {modelPath:'double_pendulum_with_base',
+        modelTitle:'Double Pendulum With Base'},
       {modelPath:'breakable_test', modelTitle:'Breakable_test'},
       {modelPath:'brick_box_3x1x3', modelTitle:'Brick Box 3x1x3'},
       {modelPath:'cardboard_box', modelTitle:'Cardboard Box'},
@@ -778,7 +805,8 @@ gzangular.controller('treeControl', ['$scope', function($scope)
     }
   };
 
-  $scope.expandProperty = function (prop, modelName, subPropShortName, subPropName, parentProp)
+  $scope.expandProperty = function (prop, modelName, subPropShortName,
+    subPropName, parentProp)
   {
     var modelId = convertNameId(modelName);
     var idContent = 'expandable-' + prop + '-' + modelId;
@@ -2033,7 +2061,8 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
 /**
  * Format stats message for proper display
  * @param {} stats
- * @returns {Object.<position, orientation, inertial, diffuse, specular, attenuation>}
+ * @returns {Object.<position, orientation, inertial,-
+ *  diffuse, specular, attenuation>}
  */
 GZ3D.Gui.prototype.formatStats = function(stats)
 {
@@ -2824,9 +2853,11 @@ GZ3D.GZIface.prototype.onConnected = function()
       };
       entityMsg.direction = entity.direction;
       entityMsg.range = entity.children[0].distance;
-      entityMsg.attenuation_constant = entity.serverProperties.attenuation_constant;
+      entityMsg.attenuation_constant =
+        entity.serverProperties.attenuation_constant;
       entityMsg.attenuation_linear = entity.serverProperties.attenuation_linear;
-      entityMsg.attenuation_quadratic = entity.serverProperties.attenuation_quadratic;
+      entityMsg.attenuation_quadratic =
+        entity.serverProperties.attenuation_quadratic;
 
       that.lightModifyTopic.publish(entityMsg);
     }
@@ -3115,7 +3146,8 @@ GZ3D.GZIface.prototype.createLightFromMsg = function(light)
   }
 
   // equation taken from
-  // http://wiki.blender.org/index.php/Doc:2.6/Manual/Lighting/Lights/Light_Attenuation
+  // eslint-disable-next-line
+  // https://docs.blender.org/manual/en/dev/render/blender_render/lighting/lights/light_attenuation.html
   var E = 1;
   var D = 1;
   var r = 1;
@@ -3277,7 +3309,7 @@ GZ3D.GZIface.prototype.createGeom = function(geom, material, parent)
         var materialName = parent.name + '::' + modelUri;
         this.entityMaterial[materialName] = mat;
 
-        this.scene.loadMesh(modelUri, submesh,
+        this.scene.loadMesh(undefined, modelUri, submesh,
             centerSubmesh, function(dae) {
               if (that.entityMaterial[materialName])
               {
@@ -4892,6 +4924,7 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
 
     event.preventDefault();
 
+    
     var planeIntersect = intersectObjects(event,
         [intersectionPlanes[currentPlane]]);
 
@@ -4988,7 +5021,8 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
                              Math.atan2(tempVector.x, tempVector.z),
                              Math.atan2(tempVector.y, tempVector.x));
 
-          tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
+          tempQuaternion.setFromRotationMatrix(
+            tempMatrix.getInverse(parentRotationMatrix));
 
           quaternionE.setFromAxisAngle(eye, rotation.z - offsetRotation.z);
           quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
@@ -5000,10 +5034,14 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
         }
         else if(scope.selected === 'RXYZE')
         {
-          quaternionE.setFromEuler(point.clone().cross(tempVector).normalize()); // has this ever worked?
+          // has this ever worked?
+          quaternionE.setFromEuler(
+            point.clone().cross(tempVector).normalize());
 
-          tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(parentRotationMatrix));
-          quaternionX.setFromAxisAngle(quaternionE, - point.clone().angleTo(tempVector));
+          tempQuaternion.setFromRotationMatrix(
+            tempMatrix.getInverse(parentRotationMatrix));
+          quaternionX.setFromAxisAngle(
+            quaternionE, - point.clone().angleTo(tempVector));
           quaternionXYZ.setFromRotationMatrix(worldRotationMatrix);
 
           tempQuaternion.multiplyQuaternions(tempQuaternion, quaternionX);
@@ -5019,10 +5057,11 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
 
             tempVector.applyMatrix4(tempMatrix.getInverse(worldRotationMatrix));
 
-            rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z),
-                Math.atan2(point.y, point.x));
-            offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(
-                tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+            rotation.set(Math.atan2(point.z, point.y),
+              Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+            offsetRotation.set(Math.atan2(tempVector.z, tempVector.y),
+              Math.atan2(tempVector.x, tempVector.z),
+                Math.atan2(tempVector.y, tempVector.x));
 
             quaternionXYZ.setFromRotationMatrix(oldRotationMatrix);
             quaternionX.setFromAxisAngle(unitX, rotation.x - offsetRotation.x);
@@ -5046,10 +5085,11 @@ GZ3D.Manipulator = function(camera, mobile, domElement, doc)
           }
           else if (scope.space === 'world')
           {
-            rotation.set(Math.atan2(point.z, point.y), Math.atan2(point.x, point.z),
-                Math.atan2(point.y, point.x));
-            offsetRotation.set(Math.atan2(tempVector.z, tempVector.y), Math.atan2(
-              tempVector.x, tempVector.z), Math.atan2(tempVector.y, tempVector.x));
+            rotation.set(Math.atan2(point.z, point.y),
+              Math.atan2(point.x, point.z), Math.atan2(point.y, point.x));
+            offsetRotation.set(Math.atan2(tempVector.z, tempVector.y),
+              Math.atan2(tempVector.x, tempVector.z),
+                Math.atan2(tempVector.y, tempVector.x));
 
             tempQuaternion.setFromRotationMatrix(tempMatrix.getInverse(
               parentRotationMatrix));
@@ -6970,12 +7010,13 @@ GZ3D.Scene.prototype.loadHeightmap = function(heights, width, height,
 
 /**
  * Load mesh
+ * @param {array} files
  * @param {string} uri
  * @param {} submesh
  * @param {} centerSubmesh
  * @param {function} callback
  */
-GZ3D.Scene.prototype.loadMesh = function(uri, submesh, centerSubmesh,
+GZ3D.Scene.prototype.loadMesh = function(files, uri, submesh, centerSubmesh,
     callback)
 {
   var uriPath = uri.substring(0, uri.lastIndexOf('/'));
@@ -6990,83 +7031,137 @@ GZ3D.Scene.prototype.loadMesh = function(uri, submesh, centerSubmesh,
     return;
   }
 
-  // load urdf model
-  if (uriFile.substr(-4).toLowerCase() === '.dae')
+  if (!files)
   {
-    return this.loadCollada(uri, submesh, centerSubmesh, callback);
-  }
-  else if (uriFile.substr(-4).toLowerCase() === '.obj')
-  {
-    return this.loadOBJ(uri, submesh, centerSubmesh, callback);
-  }
-  else if (uriFile.substr(-5).toLowerCase() === '.urdf')
-  {
+    // load urdf model
+    if (uriFile.substr(-4).toLowerCase() === '.dae')
+    {
+      return this.loadCollada(uri, submesh, centerSubmesh, callback);
+    }
+    else if (uriFile.substr(-4).toLowerCase() === '.obj')
+    {
+      return this.loadOBJ(undefined, uri, submesh, centerSubmesh, callback);
+    }
+    else if (uriFile.substr(-5).toLowerCase() === '.urdf')
+    {
     /*var urdfModel = new ROSLIB.UrdfModel({
       string : uri
     });
 
-    // adapted from ros3djs
-    var links = urdfModel.links;
-    for ( var l in links) {
-      var link = links[l];
-      if (link.visual && link.visual.geometry) {
-        if (link.visual.geometry.type === ROSLIB.URDF_MESH) {
-          var frameID = '/' + link.name;
-          var filename = link.visual.geometry.filename;
-          var meshType = filename.substr(-4).toLowerCase();
-          var mesh = filename.substring(filename.indexOf('://') + 3);
-          // ignore mesh files which are not in Collada format
-          if (meshType === '.dae')
-          {
-            var dae = this.loadCollada(uriPath + '/' + mesh, parent);
-            // check for a scale
-            if(link.visual.geometry.scale)
+      // adapted from ros3djs
+      var links = urdfModel.links;
+      for ( var l in links) {
+        var link = links[l];
+        if (link.visual && link.visual.geometry) {
+          if (link.visual.geometry.type === ROSLIB.URDF_MESH) {
+            var frameID = '/' + link.name;
+            var filename = link.visual.geometry.filename;
+            var meshType = filename.substr(-4).toLowerCase();
+            var mesh = filename.substring(filename.indexOf('://') + 3);
+            // ignore mesh files which are not in Collada format
+            if (meshType === '.dae')
             {
-              dae.scale = new THREE.Vector3(
-                  link.visual.geometry.scale.x,
-                  link.visual.geometry.scale.y,
-                  link.visual.geometry.scale.z
-              );
+              var dae = this.loadCollada(uriPath + '/' + mesh, parent);
+              // check for a scale
+              if(link.visual.geometry.scale)
+              {
+                dae.scale = new THREE.Vector3(
+                    link.visual.geometry.scale.x,
+                    link.visual.geometry.scale.y,
+                    link.visual.geometry.scale.z
+                );
+              }
             }
           }
         }
-      }
-    }*/
+      }*/
+    }
+  }
+  else if (files)
+  {
+    // load urdf model
+    if (uriFile.substr(-4).toLowerCase() === '.dae')
+    {
+      return this.loadCollada(files[0], uri, submesh, centerSubmesh, callback);
+    }
+    else if (uriFile.substr(-4).toLowerCase() === '.obj')
+    {
+      var obj = this.loadOBJ(files, uri, submesh, centerSubmesh, callback);
+      return obj;
+    }
   }
 };
 
 /**
  * Load collada file
+ * @param {string} file
  * @param {string} uri
  * @param {} submesh
  * @param {} centerSubmesh
  * @param {function} callback
  */
-GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
+GZ3D.Scene.prototype.loadCollada = function(filestring, uri, submesh, centerSubmesh,
     callback)
 {
   var dae;
+  var mesh = null;
+  /*
+  // Crashes: issue #36
+  if (this.meshes[uri])
+  {
+    dae = this.meshes[uri];
+    dae = dae.clone();
+    this.useColladaSubMesh(dae, submesh, centerSubmesh);
+    callback(dae);
+    return;
+  }
+  */
+
+  var loader = new THREE.ColladaLoader();
   // var loader = new ColladaLoader2();
   // loader.options.convertUpAxis = true;
-  this.colladaLoader.load(uri, function(collada)
+
+  var thatURI = uri;
+  var thatSubmesh = submesh;
+  var thatCenterSubmesh = centerSubmesh;
+
+  if (!filestring)
   {
-    // check for a scale factor
-    /*if(collada.dae.asset.unit)
+    loader.load(uri, function(collada)
     {
-      var scale = collada.dae.asset.unit;
-      collada.scene.scale = new THREE.Vector3(scale, scale, scale);
-    }*/
+      // check for a scale factor
+      /*if(collada.dae.asset.unit)
+      {
+        var scale = collada.dae.asset.unit;
+        collada.scene.scale = new THREE.Vector3(scale, scale, scale);
+      }*/
 
-    dae = collada.scene;
-    dae.updateMatrix();
-    this.scene.prepareColladaMesh(dae);
-    this.scene.meshes[uri] = dae;
-    dae = dae.clone();
-    this.scene.useSubMesh(dae, submesh, centerSubmesh);
+      dae = collada.scene;
+      dae.updateMatrix();
+      this.scene.prepareColladaMesh(dae);
+      this.scene.meshes[uri] = dae;
+      dae = dae.clone();
+      this.scene.useSubMesh(dae, submesh, centerSubmesh);
 
-    dae.name = uri;
-    callback(dae);
-  });
+      dae.name = uri;
+      callback(dae);
+    });
+  }
+  else
+  {
+    loader.parse(filestring, function(collada)
+    {
+      dae = collada.scene;
+      dae.updateMatrix();
+      this.scene.prepareColladaMesh(dae);
+      this.scene.meshes[thatURI] = dae;
+      dae = dae.clone();
+      this.scene.useSubMesh(dae, thatSubmesh, centerSubmesh);
+
+      dae.name = thatURI;
+      callback(dae);
+    }, undefined);
+  }
 };
 
 /**
@@ -7206,22 +7301,21 @@ GZ3D.Scene.prototype.useSubMesh = function(mesh, submesh, centerSubmesh)
 };
 
 /**
- * Load collada file
- * @param {string} uri
+ * Load Obj file
+ * @param {array} files
  * @param {} submesh
  * @param {} centerSubmesh
  * @param {function} callback
  */
-GZ3D.Scene.prototype.loadOBJ = function(uri, submesh, centerSubmesh,
+GZ3D.Scene.prototype.loadOBJ = function(files, uri, submesh, centerSubmesh,
     callback)
 {
   var obj = null;
   var baseUrl = uri.substr(0, uri.lastIndexOf('/') + 1);
   var mtlLoader = new THREE.MTLLoader();
-  this.objLoader.load(uri, function(container)
+  var that = this;
+  var containerLoaded = function (container)
   {
-    mtlLoader.setPath(baseUrl);
-
     // callback to signal mesh loading is complete
     var loadComplete = function()
     {
@@ -7271,7 +7365,31 @@ GZ3D.Scene.prototype.loadOBJ = function(uri, submesh, centerSubmesh,
       var mtlPath = container.materialLibraries[i];
       mtlLoader.load(mtlPath, applyMaterial);
     }
-  });
+  };
+
+  if (!files)
+  {
+    this.objLoader.load(uri, function(_container)
+    {
+      mtlLoader.setPath(baseUrl);
+      containerLoaded(_container);
+    });
+  }
+  else
+  {
+    var _container = this.objLoader.parse(files[0]);
+    // mtlLoader.parse(files[1]);
+    // containerLoaded(_container);
+
+    // this part is to be removed after updateing the mtlLoader.
+    obj = _container;
+    this.meshes[uri] = obj;
+    obj = obj.clone();
+    this.useSubMesh(obj, submesh, centerSubmesh);
+
+    obj.name = uri;
+    callback(obj);
+  }
 };
 
 /**
@@ -7702,7 +7820,8 @@ GZ3D.Scene.prototype.viewJoints = function(model)
   if (model.jointVisuals)
   {
     // Hide = remove from parent
-    if (model.jointVisuals[0].parent !== undefined && model.jointVisuals[0].parent !== null)
+    if (model.jointVisuals[0].parent !== undefined &&
+      model.jointVisuals[0].parent !== null)
     {
       for (var v = 0; v < model.jointVisuals.length; ++v)
       {
@@ -7962,6 +8081,9 @@ GZ3D.SdfParser = function(scene, gui, gziface)
   // set the sdf version
   this.SDF_VERSION = 1.5;
   this.MATERIAL_ROOT = 'assets';
+  // true for using the files loaded in the memory.
+  // false for using the files URLs to load them.
+  this.usingfilesUrls = false;
 
   // set the xml parser function
   this.parseXML = function(xmlStr) {
@@ -7977,7 +8099,9 @@ GZ3D.SdfParser = function(scene, gui, gziface)
   // cache materials if more than one model needs them
   this.materials = [];
   this.entityMaterial = {};
-
+  // store meshes when loading meshes from memory.
+  this.meshes = {};
+  this.mtls = {};
 };
 
 /**
@@ -7987,11 +8111,13 @@ GZ3D.SdfParser = function(scene, gui, gziface)
  */
 GZ3D.SdfParser.prototype.init = function()
 {
-  if(this.gziface)
+  if (this.gziface)
   {
+    this.usingfilesUrls = true;
     var that = this;
     this.gziface.emitter.on('error', function() {
-      that.gui.guiEvents.emit('notification_popup', 'GzWeb is currently running' +
+      that.gui.guiEvents.emit('notification_popup',
+              'GzWeb is currently running' +
               'without a server, and materials could not be loaded.' +
               'When connected scene will be reinitialized', 5000);
       that.onConnectionError();
@@ -8005,13 +8131,15 @@ GZ3D.SdfParser.prototype.init = function()
       if (gzstatus === 'error')
       {
         that.gui.guiEvents.emit('notification_popup', 'GzWeb is currently ' +
-                'running without a GzServer, and Scene is reinitialized.', 5000);
+                'running without a GzServer,'
+                + 'and Scene is reinitialized.', 5000);
         that.onConnectionError();
       }
     });
   }
   else
   {
+    this.textures = [];
     this.scene.initScene();
   }
 };
@@ -8021,7 +8149,8 @@ GZ3D.SdfParser.prototype.init = function()
  * when gziface cannot connect to gzbridge websocket
  * this is due to 2 reasons:
  * 1 - gzbridge websocket might not be run yet
- * 2 - gzbridge websocket is trying to connect to gzserver which is not running currenly
+ * 2 - gzbridge websocket is trying to connect to
+ *       gzserver which is not running currenly
  */
 GZ3D.SdfParser.prototype.onConnectionError = function()
 {
@@ -8165,8 +8294,9 @@ GZ3D.SdfParser.prototype.spawnLightFromSDF = function(sdfObj)
 /**
  * Parses a string which is a 3D vector
  * @param {string} poseStr - string which denotes the pose of the object
- * where every value should be separated with single white space and first three denotes
- * x,y,z and values of the pose, and following three denotes euler rotation around x,y,z
+ * where every value should be separated with single white space and
+ * first three denotes x,y,z and values of the pose,
+ * and following three denotes euler rotation around x,y,z
  * @returns {object} pose - pose object having position (x,y,z)(THREE.Vector3)
  * and orientation (THREE.Quaternion) properties
  */
@@ -8286,7 +8416,15 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
               }
             }
           }
-          texture = this.MATERIAL_ROOT + '/' + textureUri + '/' + mat.texture;
+          // Map texture name to the corresponding texture.
+          if (!this.usingfilesUrls)
+          {
+            texture = this.textures[mat.texture];
+          }
+          else
+          {
+            texture = this.MATERIAL_ROOT + '/' + textureUri + '/' + mat.texture;
+          }
         }
       }
       else
@@ -8320,8 +8458,17 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
       }
       var normalMapName = material.normal_map.substr(startIndex,
               material.normal_map.lastIndexOf('.') - startIndex);
-      normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
-          normalMapName + '.png';
+      // Map texture name to the corresponding texture.
+      if (!this.usingfilesUrls)
+      {
+        normalMap = this.textures[normalMapName + '.png'];
+      }
+      else
+      {
+        normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
+            normalMapName + '.png';
+      }
+
     }
   }
 
@@ -8399,33 +8546,74 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
   }
   else if (geom.mesh)
   {
+    var meshUri = geom.mesh.uri;
+    var submesh;
+    var centerSubmesh;
+
+
+    if (geom.mesh.submesh)
     {
-      var meshUri = geom.mesh.uri;
-      var submesh;
-      var centerSubmesh;
-      if (geom.mesh.submesh)
+      submesh = geom.mesh.submesh.name;
+      centerSubmesh = this.parseBool(geom.mesh.submesh.center);
+    }
+
+    var uriType = meshUri.substring(0, meshUri.indexOf('://'));
+    if (uriType === 'file' || uriType === 'model')
+    {
+      var modelName = meshUri.substring(meshUri.indexOf('://') + 3);
+      if (geom.mesh.scale)
       {
-        submesh = geom.mesh.submesh.name;
-        centerSubmesh = this.parseBool(geom.mesh.submesh.center);
+        var scale = this.parseScale(geom.mesh.scale);
+        parent.scale.x = scale.x;
+        parent.scale.y = scale.y;
+        parent.scale.z = scale.z;
       }
 
-      var uriType = meshUri.substring(0, meshUri.indexOf('://'));
-      if (uriType === 'file' || uriType === 'model')
+      var modelUri = this.MATERIAL_ROOT + '/' + modelName;
+      var materialName = parent.name + '::' + modelUri;
+      this.entityMaterial[materialName] = material;
+
+      if (!this.usingfilesUrls)
       {
-        var modelName = meshUri.substring(meshUri.indexOf('://') + 3);
-        if (geom.mesh.scale)
+        var fileReader = new FileReader();
+        var meshFileName = modelName.substring(modelName.lastIndexOf('/') + 1);
+        var ext = meshFileName.substring(meshFileName.indexOf('.') + 1);
+        var meshFile = this.meshes[meshFileName];
+        if (ext === 'obj')
         {
-          var scale = this.parseScale(geom.mesh.scale);
-          parent.scale.x = scale.x;
-          parent.scale.y = scale.y;
-          parent.scale.z = scale.z;
+          var mtlFile = this.mtls[meshFileName.split('.')[0]+'.mtl'];
+          fileReader.onload = (function(meshFile)
+          {
+            return function(evt)
+            {
+              var mtlFileString = evt.target.result;
+              var objFileReader = new FileReader();
+              objFileReader.onload = (function(mtlFileString)
+              {
+                return function(evt)
+                {
+                  var fileString = evt.target.result;
+                  that.scene.loadMesh([fileString, mtlFileString], modelUri, submesh, centerSubmesh, function(obj){
+                    parent.add(obj);
+                    loadGeom(parent);
+                  });
+                };
+              })(mtlFileString);
+              objFileReader.readAsText(meshFile, 'UTF-8');
+            };
+          })(meshFile);
+
+          fileReader.readAsText(mtlFile, 'UTF-8');
         }
-
-        var modelUri = this.MATERIAL_ROOT + '/' + modelName;
-        var materialName = parent.name + '::' + modelUri;
-        this.entityMaterial[materialName] = material;
-
-        this.scene.loadMesh(modelUri, submesh, centerSubmesh, function(dae){
+        else if (ext === 'dae')
+        {
+          fileReader.onload = loadedColladaMesh;
+          fileReader.readAsText(meshFile, 'UTF-8');
+        }
+      }
+      else
+      {
+        this.scene.loadMesh(undefined, modelUri, submesh, centerSubmesh, function(dae){
           if (that.entityMaterial[materialName])
           {
             var allChildren = [];
@@ -8523,6 +8711,29 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
         break;
       }
     }
+  }
+
+  function loadedColladaMesh(evt)
+  {
+    var fileString = evt.target.result;
+    that.scene.loadMesh([fileString], modelUri, submesh, centerSubmesh, function(dae){
+      if (that.entityMaterial[materialName])
+      {
+        var allChildren = [];
+        dae.getDescendants(allChildren);
+        for (var c = 0; c < allChildren.length; ++c)
+        {
+          if (allChildren[c] instanceof THREE.Mesh)
+          {
+            that.scene.setMaterial(allChildren[c],
+                    that.entityMaterial[materialName]);
+            break;
+          }
+        }
+      }
+      parent.add(dae);
+      loadGeom(parent);
+    });
   }
 };
 
@@ -9036,7 +9247,7 @@ GZ3D.SpawnModel.prototype.onMouseDown = function(event)
 {
   // Does this ever get called?
   // Change like this:
-  // https://bitbucket.org/osrf/gzweb/pull-request/14/switch-to-arrow-mode-when-spawning-models/diff
+  // https://bitbucket.org/osrf/gzweb/pull-request/14
   event.preventDefault();
   event.stopImmediatePropagation();
 };
@@ -9190,4 +9401,96 @@ GZ3D.SpawnModel.prototype.generateUniqueName = function(entity)
       return entity+'_'+i;
     }
   }
+};
+
+/**
+ * Start spawning an entity.
+ * Adds an object to the scene.
+ * @param {string} fileString - The model sdf file as text
+ */
+GZ3D.SpawnModel.prototype.spawnFromSdf = function(fileString)
+{
+  var obj = new THREE.Object3D();
+  var sdfXml = this.sdfParser.parseXML(fileString);
+
+  var myjson = xml2json(sdfXml, '\t');
+  var sdfObj = JSON.parse(myjson).sdf;
+
+  var mesh = this.sdfParser.spawnFromSDF(sdfXml);
+
+  obj.name = sdfXml.getElementsByTagName('model')[0].getAttribute('name');
+
+  var joints = [];
+
+  obj.add(mesh);
+
+  var getIdFromName = function (name)
+  {
+    for (var j = 0, len = obj.children[0].children.length; j < len; j++) {
+      if (name === obj.children[0].children[j].name)
+      {
+        return obj.children[0].children[j].id;
+      }
+    }
+  };
+
+  // this to enable joint visuals in sdfviewer mode
+  if (sdfObj.model.joint)
+  {
+    var joint_id = 99;
+    for (var i = 0, l = sdfObj.model.joint.length; i < l; i++) {
+      var joint = sdfObj.model.joint[i];
+      if (joint.pose !== undefined && joint.axis.xyz !== undefined)
+      {
+        var pose = joint.pose.split(/\s+/);
+        var xyz = joint.axis.xyz.split(/\s+/);
+        var modelJoint =
+        {
+          name: joint['@name'],
+          id: joint_id++,
+          angle: 0,
+          type: joint['@type'],
+          parent: joint.parent,
+          parent_id: getIdFromName(joint.parent),
+          child: joint.child,
+          child_id: getIdFromName(joint.child),
+          pose : {
+            position : {
+              x: parseFloat(pose[0]),
+              y: parseFloat(pose[1]),
+              z: parseFloat(pose[2])
+            },
+            orientation : {
+              x: parseFloat(pose[3]),
+              y: parseFloat(pose[4]),
+              z: parseFloat(pose[5]),
+              w: 1
+            }
+          },
+          axis1 : {
+            xyz : {
+              x: parseFloat(xyz[0]),
+              y: parseFloat(xyz[1]),
+              z: parseFloat(xyz[2])
+            },
+            limit_lower: -1e+16,
+            limit_upper: 1e+16,
+            limit_effort: -1,
+            limit_velocity: -1,
+            damping: 0,
+            friction: 0,
+            use_parent_model_frame: joint.axis.use_parent_model_frame
+          }
+        };
+        joints.push(modelJoint);
+      }
+      obj.joint = joints;
+    }
+  }
+
+  // the model appears at the origin
+  obj.position.x = 0;
+  obj.position.y = 0;
+  obj.position.z += 0.5;
+  this.scene.add(obj);
 };
