@@ -1,10 +1,14 @@
-
 describe('Gzscene tests', function() {
 
-    var scene = new GZ3D.Scene();
-    var gui = new GZ3D.Gui(scene);
-    var sdfparser = new GZ3D.SdfParser(scene, gui);
+  var scene;
+  var gui;
+  var sdfparser;
 
+  beforeAll(function(){
+    scene = new GZ3D.Scene();
+    gui = new GZ3D.Gui(scene);
+    sdfparser = new GZ3D.SdfParser(scene, gui);
+  });
 
   describe('Test gzscene Initialize', function() {
     it('Intial values should match', function() {
@@ -337,7 +341,7 @@ describe('Gzscene tests', function() {
     });
   });
 
-  describe('Spawn a model with an obj mesh', function() {
+  describe('Spawn a model with an object mesh', function() {
     it('should add a model to the scene and then removes it', function() {
       var sdf, model;
       var xhttp = new XMLHttpRequest();
@@ -377,127 +381,92 @@ describe('Gzscene tests', function() {
     });
   });
 
-  describe('Spawn a model with no mesh using the file api', function() {
-    it('should add a model to the scene using the model files and then removes it', function() {
-      var sdf, model, obj;
-      var xhttp = new XMLHttpRequest();
+  // Test inertia visualizations
+  describe('Test inertia visuals', function() {
+    it('Should toggle inertia visualizations', function() {
+      var sdf, object, visual, model, xhttp;
+
+      xhttp = new XMLHttpRequest();
       xhttp.overrideMimeType('text/xml');
       xhttp.open('GET', 'http://localhost:9876/base/gz3d/test/utils/beer/model.sdf', false);
       xhttp.send();
       sdf = xhttp.responseXML;
+      model = sdfparser.spawnFromSDF(sdf);
+      scene.add(model);
 
-      model = scene.getByName('beer');
-      expect(model).toEqual(undefined);
+      // no visuals intially
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).toEqual(undefined);
 
-      obj = scene.createFromSdf(sdf);
+      // if there was no selected entity it shouldn't break
+      guiEvents.emit('view_inertia');
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).toEqual(undefined);
+
+      // select a model and then view the visuals
+      scene.selectedEntity = model;
+      guiEvents.emit('view_inertia');
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).not.toEqual(undefined);
+
+      // hide the visuals
+      guiEvents.emit('view_inertia');
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).toEqual(undefined);
+
+      // test to view the visuals when they already exist
+      guiEvents.emit('view_inertia');
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).not.toEqual(undefined);
+
+      // hide the visuals
+      guiEvents.emit('view_inertia');
+      visual = model.getObjectByName('INERTIA_VISUAL');
+      expect(visual).toEqual(undefined);
+    });
+  });
+
+  // Test gzscene.setFromObject
+  describe('Test gzscene setFromObject', function() {
+    it('Should set the correct box vertices', function() {
+
+      var mesh, v1, v2, box, obj;
+      // add a box at (0,0,0)
+      mesh = scene.createBox(1, 1, 1);
+      v1 = new THREE.Vector3(-0.5, -0.5, -0.5);
+      v2 = new THREE.Vector3(0.5, 0.5, 0.5);
+      obj = new THREE.Object3D();
+      obj.add(mesh);
+      box = new THREE.Box3();
+      scene.setFromObject(box, obj);
+      expect(box.min).toEqual(v1);
+      expect(box.max).toEqual(v2);
+    });
+  });
+
+  // Test gzscene.setFromObject after adding inertia visual
+  describe('Test gzscene setFromObject with inertia visual', function() {
+    it('Should set the correct box vertices taking the model only into account', function() {
+
+      var mesh, v1, v2, box, obj;
+      // add a box at (0,0,0)
+      mesh = scene.createBox(1, 1, 1);
+      v1 = new THREE.Vector3(-0.5, -0.5, -0.5);
+      v2 = new THREE.Vector3(0.5, 0.5, 0.5);
+      obj = new THREE.Object3D();
+      obj.add(mesh);
       scene.add(obj);
-      model = scene.getByName('beer');
 
-      expect(model).not.toEqual(undefined);
-      scene.remove(model);
-      model = scene.getByName('beer');
-      expect(model).toEqual(undefined);
+      // select a model and then view the visuals
+      scene.selectedEntity = obj;
+      guiEvents.emit('view_inertia');
+
+      box = new THREE.Box3();
+      scene.setFromObject(box, obj);
+      expect(box.min).toEqual(v1);
+      expect(box.max).toEqual(v2);
+
+      scene.remove(obj);
     });
   });
-
-  describe('Spawn a model with obj mesh using the file api', function() {
-    it('should add a model to the scene using the model files and then removes it', function() {
-      var sdf, obj, mtl, model, modelName, xhttp_1, xhttp_2, xhttp_3;
-      xhttp_1 = new XMLHttpRequest();
-      xhttp_1.overrideMimeType('text/xml');
-      xhttp_1.open('GET', 'http://localhost:9876/base/gz3d/test/utils/walkway_metal_straight/model.sdf', false);
-      xhttp_1.send();
-      sdf = xhttp_1.responseXML;
-
-      xhttp_2 = new XMLHttpRequest();
-      xhttp_2.overrideMimeType('text/plain');
-      xhttp_2.open('GET', 'http://localhost:9876/base/gz3d/test/utils/walkway_metal_straight/meshes/mesh.obj', false);
-      xhttp_2.send();
-      obj = xhttp_2.responseText;
-      sdfparser.meshes['mesh.obj'] = obj;
-
-      xhttp_3 = new XMLHttpRequest();
-      xhttp_3.overrideMimeType('text/xml');
-      xhttp_3.open('GET', 'http://localhost:9876/base/gz3d/test/utils/walkway_metal_straight/meshes/mesh.mtl', false);
-      xhttp_3.send();
-      mtl = xhttp_3.responseText;
-      sdfparser.meshes['mesh.mtl'] = mtl;
-
-      model = scene.getByName('walkway_metal_straight');
-      expect(model).toEqual(undefined);
-
-      obj = scene.createFromSdf(sdf);
-      scene.add(obj);
-      model = scene.getByName('walkway_metal_straight');
-
-      expect(model).not.toEqual(undefined);
-      scene.remove(model);
-      model = scene.getByName('walkway_metal_straight');
-      expect(model).toEqual(undefined);
-    });
-  });
-
-  describe('Spawn a model where the mesh files are undefined', function() {
-    it('should add a model to the scene using the model files and then removes it', function() {
-      var sdf, model, xhttp_1;
-      xhttp_1 = new XMLHttpRequest();
-      xhttp_1.overrideMimeType('text/xml');
-      xhttp_1.open('GET', 'http://localhost:9876/base/gz3d/test/utils/walkway_metal_straight/model.sdf', false);
-      xhttp_1.send();
-      sdf = xhttp_1.responseXML;
-
-      sdfparser.meshes['mesh.obj'] = undefined;
-
-      sdfparser.meshes['mesh.mtl'] = undefined;
-
-      model = scene.getByName('walkway_metal_straight');
-      expect(model).toEqual(undefined);
-
-      obj = scene.createFromSdf(sdf);
-      scene.add(obj);
-      model = scene.getByName('walkway_metal_straight');
-
-      expect(model).not.toEqual(undefined);
-      scene.remove(model);
-      model = scene.getByName('walkway_metal_straight');
-      expect(model).toEqual(undefined);
-    });
-  });
-
-  describe('Spawn a model where all the files are undefined', function() {
-    it('shouldnt add amodel to the scene', function() {
-      var model;
-
-      sdfparser.meshes['mesh.obj'] = undefined;
-
-      sdfparser.meshes['mesh.mtl'] = undefined;
-
-      model = scene.getByName('walkway_metal_straight');
-      expect(model).toEqual(undefined);
-
-      obj = scene.createFromSdf(undefined);
-
-      expect(obj).toEqual(undefined);
-    });
-  });
-
-    describe('Spawn a model with a collada mesh', function() {
-      it('should add a model to the scene and then removes it', function() {
-        var sdf, model;
-        var xhttp = new XMLHttpRequest();
-        xhttp.overrideMimeType('text/xml');
-        xhttp.open('GET', 'http://localhost:9876/base/gz3d/test/utils/house_2/model.sdf', false);
-        xhttp.send();
-        sdf = xhttp.responseXML;
-        model = sdfparser.spawnFromSDF(sdf);
-        scene.add(model);
-
-        model = scene.getByName('House 2');
-        expect(model).not.toEqual(undefined);
-
-        scene.remove(model);
-        model = scene.getByName('House 2');
-        expect(model).toEqual(undefined);
-      });
-    });
 });
