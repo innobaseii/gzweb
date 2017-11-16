@@ -308,6 +308,7 @@ $(function()
   $('#view-transparent').buttonMarkup({icon: 'false'});
   $('#view-wireframe').buttonMarkup({icon: 'false'});
   $('#view-joints').buttonMarkup({icon: 'false'});
+  $('#view-com').buttonMarkup({icon: 'false'});
   guiEvents.emit('toggle_notifications');
   guiEvents.emit('show_orbit_indicator');
 
@@ -639,6 +640,14 @@ $(function()
     {
       $('#model-popup').popup('close');
       guiEvents.emit('view_joints');
+    }
+  });
+
+  $( '#view-com' ).click(function() {
+    if ($('#view-com a').css('color') === 'rgb(255, 255, 255)')
+    {
+      $('#model-popup').popup('close');
+      guiEvents.emit('view_com');
     }
   });
 
@@ -1274,6 +1283,12 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('view_joints', function ()
       {
         that.scene.viewJoints(that.scene.selectedEntity);
+      }
+  );
+
+  guiEvents.on('view_com', function ()
+      {
+        that.scene.viewCOM(that.scene.selectedEntity);
       }
   );
 
@@ -2002,6 +2017,7 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
     $('#view-transparent').css('visibility','collapse');
     $('#view-wireframe').css('visibility','collapse');
     $('#view-joints').css('visibility','collapse');
+    $('#view-com').css('visibility','collapse');
     $('#model-popup').popup('open',
       {x: event.clientX + emUnits(6),
        y: event.clientY + emUnits(-8)});
@@ -2026,6 +2042,24 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
       $('#view-wireframe').buttonMarkup({icon: 'false'});
     }
 
+    if (entity.children.length === 0)
+    {
+      $('#view-com a').css('color', '#888888');
+      $('#view-com').buttonMarkup({icon: 'false'});
+    }
+    else
+    {
+      $('#view-com a').css('color', '#ffffff');
+      if (entity.getObjectByName('COM_VISUAL', true))
+      {
+        $('#view-com').buttonMarkup({icon: 'check'});
+      }
+      else
+      {
+        $('#view-com').buttonMarkup({icon: 'false'});
+      }
+    }
+
     if (entity.joint === undefined || entity.joint.length === 0)
     {
       $('#view-joints a').css('color', '#888888');
@@ -2047,6 +2081,7 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
     $('#view-transparent').css('visibility','visible');
     $('#view-wireframe').css('visibility','visible');
     $('#view-joints').css('visibility','visible');
+    $('#view-com').css('visibility','visible');
     $('#model-popup').popup('open',
       {x: event.clientX + emUnits(6),
        y: event.clientY + emUnits(0)});

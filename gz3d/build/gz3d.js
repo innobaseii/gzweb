@@ -313,6 +313,7 @@ $(function()
   $('#view-transparent').buttonMarkup({icon: 'false'});
   $('#view-wireframe').buttonMarkup({icon: 'false'});
   $('#view-joints').buttonMarkup({icon: 'false'});
+  $('#view-com').buttonMarkup({icon: 'false'});
   guiEvents.emit('toggle_notifications');
   guiEvents.emit('show_orbit_indicator');
 
@@ -644,6 +645,14 @@ $(function()
     {
       $('#model-popup').popup('close');
       guiEvents.emit('view_joints');
+    }
+  });
+
+  $( '#view-com' ).click(function() {
+    if ($('#view-com a').css('color') === 'rgb(255, 255, 255)')
+    {
+      $('#model-popup').popup('close');
+      guiEvents.emit('view_com');
     }
   });
 
@@ -1279,6 +1288,12 @@ GZ3D.Gui.prototype.init = function()
   guiEvents.on('view_joints', function ()
       {
         that.scene.viewJoints(that.scene.selectedEntity);
+      }
+  );
+
+  guiEvents.on('view_com', function ()
+      {
+        that.scene.viewCOM(that.scene.selectedEntity);
       }
   );
 
@@ -2007,6 +2022,7 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
     $('#view-transparent').css('visibility','collapse');
     $('#view-wireframe').css('visibility','collapse');
     $('#view-joints').css('visibility','collapse');
+    $('#view-com').css('visibility','collapse');
     $('#model-popup').popup('open',
       {x: event.clientX + emUnits(6),
        y: event.clientY + emUnits(-8)});
@@ -2031,6 +2047,24 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
       $('#view-wireframe').buttonMarkup({icon: 'false'});
     }
 
+    if (entity.children.length === 0)
+    {
+      $('#view-com a').css('color', '#888888');
+      $('#view-com').buttonMarkup({icon: 'false'});
+    }
+    else
+    {
+      $('#view-com a').css('color', '#ffffff');
+      if (entity.getObjectByName('COM_VISUAL', true))
+      {
+        $('#view-com').buttonMarkup({icon: 'check'});
+      }
+      else
+      {
+        $('#view-com').buttonMarkup({icon: 'false'});
+      }
+    }
+
     if (entity.joint === undefined || entity.joint.length === 0)
     {
       $('#view-joints a').css('color', '#888888');
@@ -2052,6 +2086,7 @@ GZ3D.Gui.prototype.openEntityPopup = function(event, entity)
     $('#view-transparent').css('visibility','visible');
     $('#view-wireframe').css('visibility','visible');
     $('#view-joints').css('visibility','visible');
+    $('#view-com').css('visibility','visible');
     $('#model-popup').popup('open',
       {x: event.clientX + emUnits(6),
        y: event.clientY + emUnits(0)});
@@ -2821,7 +2856,7 @@ GZ3D.GZIface.prototype.onConnected = function()
     var entityMsg =
     {
       name : entity.name,
-      id : entity.userData,
+      id : entity.userData.id,
       createEntity : 0,
       position :
       {
@@ -2882,11 +2917,11 @@ GZ3D.GZIface.prototype.onConnected = function()
     var modelMsg =
     {
       name : entity.parent.name,
-      id : entity.parent.userData,
+      id : entity.parent.userData.id,
       link:
       {
         name: entity.name,
-        id: entity.userData,
+        id: entity.userData.id,
         self_collide: entity.serverProperties.self_collide,
         gravity: entity.serverProperties.gravity,
         kinematic: entity.serverProperties.kinematic
@@ -3048,7 +3083,7 @@ GZ3D.GZIface.prototype.createModelFromMsg = function(model)
 {
   var modelObj = new THREE.Object3D();
   modelObj.name = model.name;
-  modelObj.userData = model.id;
+  modelObj.userData.id = model.id;
   if (model.pose)
   {
     this.scene.setPose(modelObj, model.pose.position, model.pose.orientation);
@@ -3058,13 +3093,28 @@ GZ3D.GZIface.prototype.createModelFromMsg = function(model)
     var link = model.link[j];
     var linkObj = new THREE.Object3D();
     linkObj.name = link.name;
-    linkObj.userData = link.id;
+    linkObj.userData.id = link.id;
     linkObj.serverProperties =
         {
           self_collide: link.self_collide,
           gravity: link.gravity,
           kinematic: link.kinematic
         };
+
+    if (link.inertial)
+    {
+      var inertialPose = link.inertial.pose;
+      var inertialMass = link.inertial.mass;
+      linkObj.userData.inertial = {};
+      if (inertialMass)
+      {
+        linkObj.userData.inertial.mass = inertialMass;
+      }
+      if (inertialPose)
+      {
+        linkObj.userData.inertial.pose = inertialPose;
+      }
+    }
 
     if (link.pose)
     {
@@ -5917,6 +5967,19 @@ GZ3D.Scene.prototype.init = function()
   ballVisual.add(mesh);
 
   this.jointAxis['ballVisual'] = ballVisual;
+
+  // center of mass visual
+  this.COMvisual = new THREE.Object3D();
+
+  geometry = new THREE.SphereGeometry(1, 32, 32);
+
+  mesh = new THREE.Mesh(geometry);
+  this.setMaterial(mesh, {'ambient':[0.5,0.5,0.5,1.000000],
+    'texture':'assets/media/materials/textures/com.png'});
+  mesh.position.x = 0.15;
+  mesh.rotation.z = -Math.PI/2;
+  mesh.name = 'COM_VISUAL';
+  this.COMvisual.add(mesh);
 };
 
 GZ3D.Scene.prototype.initScene = function()
@@ -6182,7 +6245,7 @@ GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
       }
 
       if (model.name === 'grid' || model.name === 'boundingBox' ||
-          model.name === 'JOINT_VISUAL')
+          model.name === 'JOINT_VISUAL' || model.name === 'COM_VISUAL')
       {
         point = objects[i].point;
         model = null;
@@ -7771,7 +7834,8 @@ GZ3D.Scene.prototype.setViewAs = function(model, viewAs)
         descendants[i].name.indexOf('COLLISION_VISUAL') === -1 &&
         !this.getParentByPartialName(descendants[i], 'COLLISION_VISUAL') &&
         descendants[i].name.indexOf('wireframe') === -1 &&
-        descendants[i].name.indexOf('JOINT_VISUAL') === -1)
+        descendants[i].name.indexOf('JOINT_VISUAL') === -1 &&
+        descendants[i].name.indexOf('COM_VISUAL') === -1)
     {
       // Note: multi-material is being deprecated and will be removed soon
       if (descendants[i].material instanceof THREE.MultiMaterial)
@@ -8015,6 +8079,186 @@ GZ3D.Scene.prototype.viewJoints = function(model)
         rotMatrix.lookAt(direction, new THREE.Vector3(0, 0, 0), secondAxis.up);
         secondAxis.quaternion.setFromRotationMatrix(rotMatrix);
       }
+    }
+  }
+};
+
+/**
+ * View Center Of Mass
+ * Toggle: if there are COM visuals, hide, otherwise, show.
+ * @param {} model
+ */
+GZ3D.Scene.prototype.viewCOM = function(model)
+{
+  if (model === undefined || model === null)
+  {
+    return;
+  }
+  if (model.children.length === 0)
+  {
+    return;
+  }
+
+  var child;
+
+  // Visuals already exist
+  if (model.COMVisuals)
+  {
+    // Hide = remove from parent
+    if (model.COMVisuals[0].parent !== undefined &&
+      model.COMVisuals[0].parent !== null)
+    {
+      for (var v = 0; v < model.COMVisuals.length; ++v)
+      {
+        for (var k = 0; k < 3; k++)
+        {
+          model.COMVisuals[v].parent.remove(model.COMVisuals[v].crossLines[k]);
+        }
+        model.COMVisuals[v].parent.remove(model.COMVisuals[v]);
+      }
+    }
+    // Show: attach to parent
+    else
+    {
+      for (var s = 0; s < model.children.length; ++s)
+      {
+        child = model.getObjectByName(model.children[s].name);
+
+        if (!child || child.name === 'boundingBox')
+        {
+          continue;
+        }
+
+        child.add(model.COMVisuals[s].crossLines[0]);
+        child.add(model.COMVisuals[s].crossLines[1]);
+        child.add(model.COMVisuals[s].crossLines[2]);
+        child.add(model.COMVisuals[s]);
+      }
+    }
+  }
+  // Create visuals
+  else
+  {
+    model.COMVisuals = [];
+    var box, COMVisual, line_1, line_2, line_3, helperGeometry_1,
+    helperGeometry_2, helperGeometry_3, helperMaterial, points = new Array(6);
+    for (var j = 0; j < model.children.length; ++j)
+    {
+      child = model.getObjectByName(model.children[j].name);
+
+      if (!child)
+      {
+        continue;
+      }
+
+      if (child.userData.inertial)
+      {
+        var mesh, radius, inertialMass, userdatapose, inertialPose = {};
+        var inertial = child.userData.inertial;
+
+        userdatapose = child.userData.inertial.pose;
+        inertialMass = inertial.mass;
+
+        // calculate the radius using lead density
+        radius = Math.cbrt((0.75 * inertialMass ) / (Math.PI * 11340));
+
+        COMVisual = this.COMvisual.clone();
+        COMVisual.name = 'COMVisual';
+        child.add(COMVisual);
+        model.COMVisuals.push(COMVisual);
+        COMVisual.scale.set(radius, radius, radius);
+
+        var position = new THREE.Vector3(0, 0, 0);
+
+        // get euler rotation and convert it to Quaternion
+        var quaternion = new THREE.Quaternion();
+        var euler = new THREE.Euler(0, 0, 0, 'XYZ');
+        quaternion.setFromEuler(euler);
+
+        inertialPose = {
+          'position': position,
+          'orientation': quaternion
+        };
+
+        if (userdatapose !== undefined)
+        {
+          this.setPose(COMVisual, userdatapose.position,
+            userdatapose.orientation);
+            inertialPose = userdatapose;
+        }
+
+        COMVisual.crossLines = [];
+
+        // Store link's original rotation (w.r.t. the model)
+        var originalRotation = new THREE.Euler();
+        originalRotation.copy(child.rotation);
+
+        // Align link with world (reverse parent rotation w.r.t. the world)
+        child.setRotationFromMatrix(
+          new THREE.Matrix4().getInverse(child.parent.matrixWorld));
+
+        // Get its bounding box
+        box = new THREE.Box3();
+
+        box.setFromObject(child);
+
+        // Rotate link back to its original rotation
+        child.setRotationFromEuler(originalRotation);
+
+        // w.r.t child
+        var worldToLocal = new THREE.Matrix4();
+        worldToLocal.getInverse(child.matrixWorld);
+        box.applyMatrix4(worldToLocal);
+
+        // X
+        points[0] = new THREE.Vector3(box.min.x, inertialPose.position.y,
+          inertialPose.position.z);
+        points[1] = new THREE.Vector3(box.max.x, inertialPose.position.y,
+            inertialPose.position.z);
+        // Y
+        points[2] = new THREE.Vector3(inertialPose.position.x, box.min.y,
+              inertialPose.position.z);
+        points[3] = new THREE.Vector3(inertialPose.position.x, box.max.y,
+                inertialPose.position.z);
+        // Z
+        points[4] = new THREE.Vector3(inertialPose.position.x,
+          inertialPose.position.y, box.min.z);
+        points[5] = new THREE.Vector3(inertialPose.position.x,
+          inertialPose.position.y, box.max.z);
+
+        helperGeometry_1 = new THREE.Geometry();
+        helperGeometry_1.vertices.push(points[0]);
+        helperGeometry_1.vertices.push(points[1]);
+
+        helperGeometry_2 = new THREE.Geometry();
+        helperGeometry_2.vertices.push(points[2]);
+        helperGeometry_2.vertices.push(points[3]);
+
+        helperGeometry_3 = new THREE.Geometry();
+        helperGeometry_3.vertices.push(points[4]);
+        helperGeometry_3.vertices.push(points[5]);
+
+        helperMaterial = new THREE.LineBasicMaterial({color: 0x00ff00});
+
+        line_1 = new THREE.Line(helperGeometry_1, helperMaterial,
+            THREE.LineSegments);
+        line_2 = new THREE.Line(helperGeometry_2, helperMaterial,
+            THREE.LineSegments);
+        line_3 = new THREE.Line(helperGeometry_3, helperMaterial,
+            THREE.LineSegments);
+
+        line_1.name = 'COM_VISUAL';
+        line_2.name = 'COM_VISUAL';
+        line_3.name = 'COM_VISUAL';
+        COMVisual.crossLines.push(line_1);
+        COMVisual.crossLines.push(line_2);
+        COMVisual.crossLines.push(line_3);
+
+        // show lines
+        child.add(line_1);
+        child.add(line_2);
+        child.add(line_3);
+       }
     }
   }
 };
@@ -8922,6 +9166,19 @@ GZ3D.SdfParser.prototype.createLink = function(link)
   var linkPose, visualObj;
   var linkObj = new THREE.Object3D();
   linkObj.name = link['@name'];
+
+  if (link.inertial)
+  {
+    linkObj.userData.inertial = {};
+    if (link.inertial.mass)
+    {
+      linkObj.userData.inertial.mass = link.inertial.mass;
+    }
+    if (link.inertial.pose)
+    {
+      linkObj.userData.inertial.pose = link.inertial.pose;
+    }
+  }
 
   if (link.pose)
   {
