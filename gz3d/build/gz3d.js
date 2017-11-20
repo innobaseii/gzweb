@@ -2,19 +2,20 @@ var GZ3D = GZ3D || {
   REVISION : '1'
 };
 
+// https://bitbucket.org/osrf/gzweb/issues/136
+var guiEvents = new EventEmitter2({ verbose: true });
+
+// Assuming all mobile devices are touch devices.
+var isTouchDevice = /Mobi/.test(navigator.userAgent);
+
 
 /*global $:false */
 /*global angular*/
-
-var guiEvents = new EventEmitter2({ verbose: true });
 
 var emUnits = function(value)
     {
       return value*parseFloat($('body').css('font-size'));
     };
-
-// Assuming all mobile devices are touch devices.
-var isTouchDevice = /Mobi/.test(navigator.userAgent);
 
 var isWideScreen = function()
     {
@@ -5606,10 +5607,12 @@ GZ3D.RadialMenu.prototype.setNumberOfItems = function(number)
 
 /**
  * The scene is where everything is placed, from objects, to lights and cameras.
+ * @param gzshaders - gzshaders instance to access shaders.
  * @constructor
  */
-GZ3D.Scene = function()
+GZ3D.Scene = function(gzshaders)
 {
+  this.shaders = gzshaders;
   this.init();
 };
 
@@ -5622,7 +5625,6 @@ GZ3D.Scene.prototype.init = function()
   this.scene = new THREE.Scene();
   // this.scene.name = this.name;
   this.meshes = {};
-
   // only support one heightmap for now.
   this.heightmap = null;
 
@@ -5633,6 +5635,7 @@ GZ3D.Scene.prototype.init = function()
 
   // loaders
   this.textureLoader = new THREE.TextureLoader();
+  this.textureLoader.crossOrigin = '';
   this.colladaLoader = new THREE.ColladaLoader();
   this.objLoader = new THREE.OBJLoader();
 
@@ -5644,20 +5647,26 @@ GZ3D.Scene.prototype.init = function()
   // this.renderer.shadowMapEnabled = true;
   // this.renderer.shadowMapSoft = true;
 
+  // get renderer absolute position.
+  this.canvasX = this.renderer.domElement.getBoundingClientRect().top;
+  this.canvasY = this.renderer.domElement.getBoundingClientRect().left;
+
   // lights
   this.ambient = new THREE.AmbientLight( 0x666666 );
   this.scene.add(this.ambient);
 
   // camera
-  this.camera = new THREE.PerspectiveCamera(
-      60, window.innerWidth / window.innerHeight, 0.1, 1000 );
+  this.camera = new THREE.PerspectiveCamera(60,
+    this.renderer.domElement.width / this.renderer.domElement.height,
+    0.1, 1000 );
   this.defaultCameraPosition = new THREE.Vector3(0, -5, 5);
   this.resetView();
 
   // ortho camera and scene for rendering sprites
-  this.cameraOrtho = new THREE.OrthographicCamera( -window.innerWidth * 0.5,
-      window.innerWidth * 0.5, window.innerHeight*0.5, -window.innerHeight*0.5,
-      1, 10);
+  this.cameraOrtho = new THREE.OrthographicCamera(
+    -this.renderer.domElement.width * 0.5,
+    this.renderer.domElement.width * 0.5, this.renderer.domElement.height*0.5,
+    -this.renderer.domElement.height*0.5, 1, 10);
   this.cameraOrtho.position.z = 10;
   this.sceneOrtho = new THREE.Scene();
 
@@ -5669,7 +5678,7 @@ GZ3D.Scene.prototype.init = function()
   this.grid.castShadow = false;
   this.grid.material.transparent = true;
   this.grid.material.opacity = 0.5;
-  this.grid.visible = false;
+  this.grid.visible = true;
   this.scene.add(this.grid);
 
   this.showCollisions = false;
@@ -5682,13 +5691,23 @@ GZ3D.Scene.prototype.init = function()
 
   var that = this;
 
-  // Need to use `document` instead of getDomElement in order to get events
-  // outside the webgl div element.
-  document.addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
+  // In case we are using sdfviewer, which doesn't depend on Jquery
+  // which these event listeners do use.
+  if (GZ3D.Gui !== undefined)
+  {
+    // Need to use `document` instead of getDomElement in order to get events
+    // outside the webgl div element.
+    document.addEventListener( 'mouseup',
+        function(event) {that.onPointerUp(event);}, false );
 
-  this.getDomElement().addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
+    document.addEventListener( 'keydown',
+        function(event) {that.onKeyDown(event);}, false );
+    this.getDomElement().addEventListener( 'mouseup',
+        function(event) {that.onPointerUp(event);}, false );
+
+    this.getDomElement().addEventListener( 'touchend',
+        function(event) {that.onPointerUp(event);}, false );
+  }
 
   this.getDomElement().addEventListener( 'DOMMouseScroll',
       function(event) {that.onMouseScroll(event);}, false ); //firefox
@@ -5696,16 +5715,11 @@ GZ3D.Scene.prototype.init = function()
   this.getDomElement().addEventListener( 'mousewheel',
       function(event) {that.onMouseScroll(event);}, false );
 
-  document.addEventListener( 'keydown',
-      function(event) {that.onKeyDown(event);}, false );
-
   this.getDomElement().addEventListener( 'mousedown',
       function(event) {that.onPointerDown(event);}, false );
+
   this.getDomElement().addEventListener( 'touchstart',
       function(event) {that.onPointerDown(event);}, false );
-
-  this.getDomElement().addEventListener( 'touchend',
-      function(event) {that.onPointerUp(event);}, false );
 
   // Handles for translating and rotating objects
   this.modelManipulator = new GZ3D.Manipulator(this.camera, isTouchDevice,
@@ -5713,7 +5727,8 @@ GZ3D.Scene.prototype.init = function()
 
   this.timeDown = null;
 
-  this.controls = new THREE.OrbitControls(this.camera);
+  this.controls = new THREE.OrbitControls(this.camera,
+    this.renderer.domElement);
   this.scene.add(this.controls.targetIndicator);
 
   this.emitter = new EventEmitter2({ verbose: true });
@@ -5931,6 +5946,18 @@ GZ3D.Scene.prototype.initScene = function()
   this.add(obj);
 };
 
+/**
+ * Set canvas absolute position
+ * @param {} left - canvas left.
+ * @param {} top - canvas top.
+ */
+GZ3D.Scene.prototype.setCanvasPosition = function(left, top)
+{
+  this.canvasX = left;
+  this.canvasY = top;
+};
+
+
 GZ3D.Scene.prototype.setSDFParser = function(sdfParser)
 {
   this.spawnModel.sdfParser = sdfParser;
@@ -5956,7 +5983,8 @@ GZ3D.Scene.prototype.onPointerDown = function(event)
     if (event.touches.length === 1)
     {
       pos = new THREE.Vector2(
-          event.touches[0].clientX, event.touches[0].clientY);
+          event.touches[0].clientX,
+          event.touches[0].clientY);
     }
     else if (event.touches.length === 2)
     {
@@ -6060,7 +6088,8 @@ GZ3D.Scene.prototype.onMouseScroll = function(event)
 {
   event.preventDefault();
 
-  var pos = new THREE.Vector2(event.clientX, event.clientY);
+  var pos = new THREE.Vector2(event.clientX,
+    event.clientY);
 
   var intersect = new THREE.Vector3();
   var model = this.getRayCastModel(pos, intersect);
@@ -6146,11 +6175,12 @@ GZ3D.Scene.prototype.onKeyDown = function(event)
  */
 GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
 {
+  pos.setX(pos.x - this.canvasX);
+  pos.setY(pos.y - this.canvasY);
   var vector = new THREE.Vector3(
-      ((pos.x - this.renderer.domElement.offsetLeft)
-      / window.innerWidth) * 2 - 1,
-      -((pos.y - this.renderer.domElement.offsetTop)
-      / window.innerHeight) * 2 + 1, 1);
+    (pos.x / this.renderer.domElement.width) * 2 - 1,
+    -(pos.y / this.renderer.domElement.height) * 2 + 1, 1);
+
   vector.unproject(this.camera);
   var ray = new THREE.Raycaster( this.camera.position,
       vector.sub(this.camera.position).normalize() );
@@ -6971,7 +7001,9 @@ GZ3D.Scene.prototype.loadHeightmap = function(heights, width, height,
       }
     }
 
-    var material = new THREE.ShaderMaterial({
+    var material, options;
+
+    options = {
       uniforms:
       {
         texture0: { type: 't', value: textureLoaded[0]},
@@ -6988,11 +7020,16 @@ GZ3D.Scene.prototype.loadHeightmap = function(heights, width, height,
         lightDiffuse: { type: 'c', value: lightDiffuse},
         lightDir: { type: 'v3', value: lightDir}
       },
-      attributes: {},
-      vertexShader: document.getElementById( 'heightmapVS' ).innerHTML,
-      fragmentShader: document.getElementById( 'heightmapFS' ).innerHTML
-    });
+      attributes: {}
+    };
 
+    if (this.heightmapFS && this.heightmapVS)
+    {
+      options.uniforms.vertexShader = this.heightmapVS;
+      options.uniforms.fragmentShader = this.heightmapFS;
+    }
+
+    material = new THREE.ShaderMaterial(options);
     mesh = new THREE.Mesh( geometry, material);
   }
   else
@@ -7154,6 +7191,7 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 {
   var dae;
   var mesh = null;
+  var that = this;
   /*
   // Crashes: issue #36
   if (this.meshes[uri])
@@ -7194,10 +7232,10 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 
     dae = collada.scene;
     dae.updateMatrix();
-    this.scene.prepareColladaMesh(dae);
-    this.scene.meshes[uri] = dae;
+    that.prepareColladaMesh(dae);
+    that.meshes[uri] = dae;
     dae = dae.clone();
-    this.scene.useSubMesh(dae, submesh, centerSubmesh);
+    that.useSubMesh(dae, submesh, centerSubmesh);
 
     dae.name = uri;
     callback(dae);
@@ -7612,7 +7650,8 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
   var event = e.originalEvent;
 
   var pointer = event.touches ? event.touches[ 0 ] : event;
-  var pos = new THREE.Vector2(pointer.clientX, pointer.clientY);
+  var pos = new THREE.Vector2(pointer.clientX,
+    pointer.clientY);
 
   var intersect = new THREE.Vector3();
   var model = this.getRayCastModel(pos, intersect);
@@ -7712,7 +7751,6 @@ GZ3D.Scene.prototype.onRightClick = function(event, callback)
     callback(model);
   }
 };
-
 
 /**
  * Set model's view mode
@@ -8175,6 +8213,9 @@ GZ3D.SdfParser = function(scene, gui, gziface)
   this.meshes = {};
   this.mtls = {};
   this.textures = {};
+
+  // Should contain model files URLs if not using gzweb model files hierarchy.
+  this.customUrls = [];
 };
 
 /**
@@ -8422,7 +8463,9 @@ GZ3D.SdfParser.prototype.parseBool = function(boolStr)
 /**
  * Parses SDF material element which is going to be used by THREE library
  * It matches material scripts with the material objects which are
- * already parsed by gzbridge and saved by SDFParser
+ * already parsed by gzbridge and saved by SDFParser.
+ * In case of using custom Urls for the textures, the URLs should be added
+ * to the customUrls array to be loaded.
  * @param {object} material - SDF material object
  * @returns {object} material - material object which has the followings:
  * texture, normalMap, ambient, diffuse, specular, opacity
@@ -8495,7 +8538,23 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
           }
           else
           {
-            texture = this.MATERIAL_ROOT + '/' + textureUri + '/' + mat.texture;
+            if (this.customUrls.length !== 0)
+            {
+              for (var k = 0; k < this.customUrls.length; k++)
+              {
+                if (this.customUrls[k].indexOf(mat.texture) > -1)
+                {
+                  texture = this.customUrls[k];
+                  this.customUrls.splice(k, 1);
+                  break;
+                }
+              }
+            }
+            else
+            {
+              texture = this.MATERIAL_ROOT + '/' + textureUri + '/' +
+                mat.texture;
+            }
           }
         }
       }
@@ -8537,8 +8596,23 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
       }
       else
       {
-        normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
-          normalMapName + '.png';
+        if (this.customUrls.length !== 0)
+        {
+          for (var j = 0; j < this.customUrls.length; j++)
+          {
+            if (this.customUrls[j].indexOf(normalMapName + '.png') > -1)
+            {
+              normalMap = this.customUrls[j];
+              this.customUrls.splice(j, 1);
+              break;
+            }
+          }
+        }
+        else
+        {
+          normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
+            normalMapName + '.png';
+        }
       }
 
     }
@@ -8585,7 +8659,9 @@ GZ3D.SdfParser.prototype.parseSize = function(sizeStr)
  * object.
  * @param {object} geom - SDF geometry object which determines the geometry
  *  of the object and can have following properties: box, cylinder, sphere,
- *   plane, mesh
+ *  plane, mesh.
+ *  Note that in case of using custom Urls for the meshs, the URLS should be
+ *  added to the array cistomUrls to be used instead of the default Url.
  * @param {object} mat - SDF material object which is going to be parsed
  * by createMaterial function
  * @param {object} parent - parent 3D object
@@ -8644,10 +8720,10 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
       var modelUri = this.MATERIAL_ROOT + '/' + modelName;
       var materialName = parent.name + '::' + modelUri;
       this.entityMaterial[materialName] = material;
+      var meshFileName = meshUri.substring(meshUri.lastIndexOf('/') + 1);
 
       if (!this.usingFilesUrls)
       {
-        var meshFileName = meshUri.substring(meshUri.lastIndexOf('/') + 1);
         var ext = meshFileName.substring(meshFileName.indexOf('.') + 1);
         var meshFile = this.meshes[meshFileName];
         if (ext === 'obj')
@@ -8686,6 +8762,18 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
       }
       else
       {
+        if (this.customUrls.length !== 0)
+        {
+          for (var k = 0; k < this.customUrls.length; k++)
+          {
+            if (this.customUrls[k].indexOf(meshFileName) > -1)
+            {
+              modelUri = this.customUrls[k];
+              this.customUrls.splice(k, 1);
+              break;
+            }
+          }
+        }
         this.scene.loadMeshFromUri(modelUri, submesh, centerSubmesh,
           function (dae)
           {
@@ -9133,18 +9221,116 @@ GZ3D.SdfParser.prototype.createCylinderSDF = function(translation, euler)
 /**
  * Loads SDF of the model. It first constructs the url of the model
  * according to modelname
- * @param {string} modelName - name of the model
+ * @param {string} modelName - name of the model, the customUrls is not empty
+ * the modelName parm wouldn't be used, the function will search for the
+ * URL that has the 'model.sdf' and loads it.
  * @returns {XMLDocument} modelDOM - SDF DOM object of the loaded model
  */
 GZ3D.SdfParser.prototype.loadModel = function(modelName)
 {
-  var modelFile = this.MATERIAL_ROOT + '/' + modelName + '/model.sdf';
+  var modelFile = '';
+
+  if (this.customUrls.length !== 0)
+  {
+    for (var k = 0; k < this.customUrls.length; k++)
+    {
+      if (this.customUrls[k].indexOf('model.sdf') > -1)
+      {
+        modelFile = this.customUrls[k];
+        this.customUrls.splice(k, 1);
+        break;
+      }
+    }
+  }
+  else
+  {
+    modelFile = this.MATERIAL_ROOT + '/' + modelName + '/model.sdf';
+  }
 
   var xhttp = new XMLHttpRequest();
   xhttp.overrideMimeType('text/xml');
   xhttp.open('GET', modelFile, false);
   xhttp.send();
   return xhttp.responseXML;
+};
+
+/**
+ * The gzshaders holds the all the shaders to be used.
+ * @constructor
+ */
+GZ3D.Shaders = function()
+{
+    this.init();
+};
+
+GZ3D.Shaders.prototype.init = function()
+{
+  this.heightmapVS = 'varying vec2 vUv;'+
+    'varying vec3 vPosition;'+
+    'varying vec3 vNormal;'+
+    'void main( void ) {'+
+    'vUv = uv;'+
+    'vPosition = position;'+
+    'vNormal = normal;'+
+    'gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);'+
+    '}';
+  this.heightmapFS = '    uniform sampler2D texture0;'+
+    '    uniform sampler2D texture1;'+
+    '    uniform sampler2D texture2;'+
+    '    uniform float repeat0;'+
+    '    uniform float repeat1;'+
+    '    uniform float repeat2;'+
+    '    uniform float minHeight1;'+
+    '    uniform float minHeight2;'+
+    '    uniform float fadeDist1;'+
+    '    uniform float fadeDist2;'+
+    '    uniform vec3 ambient;'+
+    '    uniform vec3 lightDiffuse;'+
+    '    uniform vec3 lightDir;'+
+    '    varying vec2 vUv;'+
+    '    varying vec3 vPosition;'+
+    '    varying vec3 vNormal;'+
+    '    float blend(float distance, float fadeDist) {'+
+    '      float alpha = distance / fadeDist;'+
+    '      if (alpha < 0.0) {'+
+    '        alpha = 0.0;'+
+    '      }'+
+    '      if (alpha > 1.0) {'+
+    '        alpha = 1.0;'+
+    '      }'+
+    '      return alpha;'+
+    '    }'+
+    '    void main()'+
+    '    {'+
+    '      // Texture loading'+
+    '      vec3 diffuse0 = texture2D( texture0, vUv*repeat0 ).rgb;'+
+    '      vec3 diffuse1 = texture2D( texture1, vUv*repeat1 ).rgb;'+
+    '      vec3 diffuse2 = texture2D( texture2, vUv*repeat2 ).rgb;'+
+    '      // Get base texture'+
+    '      vec3 fragcolor = diffuse0;'+
+    '      // texture level 1'+
+    '      if (fadeDist1 > 0.0)'+
+    '      {'+
+    '        fragcolor = mix('+
+    '          fragcolor,'+
+    '          diffuse1,'+
+    '          blend(vPosition.z - minHeight1, fadeDist1)'+
+    '        );'+
+    '      }'+
+    '      if (fadeDist2 > 0.0)'+
+    '      {'+
+    '        // texture level 2'+
+    '        fragcolor = mix('+
+    '          fragcolor,'+
+    '          diffuse2,'+
+    '          blend(vPosition.z - (minHeight1 + minHeight2), fadeDist2)'+
+    '        );'+
+    '      }'+
+    '      vec3 lightDirNorm = normalize(lightDir);'+
+    '      float intensity = max(dot(vNormal, lightDirNorm), 0.0);'+
+    '      vec3 vLightFactor = ambient + lightDiffuse * intensity;'+
+    '      gl_FragColor = vec4(fragcolor.rgb * vLightFactor, 1.0);'+
+    '    }';
 };
 
 /**
