@@ -6,7 +6,18 @@ module.exports = function(grunt) {
       build: {
         src  : ['gz3d/src/*.js', 'gz3d/src/**/*.js'],
         dest : 'gz3d/build/gz3d.js'
-      }
+      },
+      build_sdfviewer: {
+        src: [
+        'gz3d/client/js/include/three.js', 'gz3d/client/js/include/three.compat.js',
+        'gz3d/client/js/include/OrbitControls.js', 'gz3d/client/js/include/Detector.js',
+        'gz3d/client/js/include/eventemitter2.js', 'gz3d/client/js/include/ColladaLoader.js',
+        'gz3d/client/js/include/OBJLoader.js', 'gz3d/client/js/include/MTLLoader.js',
+        'gz3d/client/js/include/xml2json.js', 'gz3d/src/gz*.js', '!gz3d/src/gziface.js',
+        '!gz3d/src/gzgui.js'
+        ],
+        dest: 'gz3d/build/SDFViewer.js'
+      },
     },
     jshint: {
       options: {
