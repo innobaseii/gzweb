@@ -1,15 +1,10 @@
 /*global $:false */
 /*global angular*/
 
-var guiEvents = new EventEmitter2({ verbose: true });
-
 var emUnits = function(value)
     {
       return value*parseFloat($('body').css('font-size'));
     };
-
-// Assuming all mobile devices are touch devices.
-var isTouchDevice = /Mobi/.test(navigator.userAgent);
 
 var isWideScreen = function()
     {

@@ -1,9 +1,11 @@
 /**
  * The scene is where everything is placed, from objects, to lights and cameras.
+ * @param gzshaders - gzshaders instance to access shaders.
  * @constructor
  */
-GZ3D.Scene = function()
+GZ3D.Scene = function(gzshaders)
 {
+  this.shaders = gzshaders;
   this.init();
 };
 
@@ -16,7 +18,6 @@ GZ3D.Scene.prototype.init = function()
   this.scene = new THREE.Scene();
   // this.scene.name = this.name;
   this.meshes = {};
-
   // only support one heightmap for now.
   this.heightmap = null;
 
@@ -27,6 +28,7 @@ GZ3D.Scene.prototype.init = function()
 
   // loaders
   this.textureLoader = new THREE.TextureLoader();
+  this.textureLoader.crossOrigin = '';
   this.colladaLoader = new THREE.ColladaLoader();
   this.objLoader = new THREE.OBJLoader();
   this.stlLoader = new THREE.STLLoader();
@@ -44,15 +46,17 @@ GZ3D.Scene.prototype.init = function()
   this.scene.add(this.ambient);
 
   // camera
-  this.camera = new THREE.PerspectiveCamera(
-      60, window.innerWidth / window.innerHeight, 0.1, 1000 );
+  this.camera = new THREE.PerspectiveCamera(60,
+    this.renderer.domElement.width / this.renderer.domElement.height,
+    0.1, 1000 );
   this.defaultCameraPosition = new THREE.Vector3(0, -5, 5);
   this.resetView();
 
   // ortho camera and scene for rendering sprites
-  this.cameraOrtho = new THREE.OrthographicCamera( -window.innerWidth * 0.5,
-      window.innerWidth * 0.5, window.innerHeight*0.5, -window.innerHeight*0.5,
-      1, 10);
+  this.cameraOrtho = new THREE.OrthographicCamera(
+    -this.renderer.domElement.width * 0.5,
+    this.renderer.domElement.width * 0.5, this.renderer.domElement.height*0.5,
+    -this.renderer.domElement.height*0.5, 1, 10);
   this.cameraOrtho.position.z = 10;
   this.sceneOrtho = new THREE.Scene();
 
@@ -64,7 +68,7 @@ GZ3D.Scene.prototype.init = function()
   this.grid.castShadow = false;
   this.grid.material.transparent = true;
   this.grid.material.opacity = 0.5;
-  this.grid.visible = false;
+  this.grid.visible = true;
   this.scene.add(this.grid);
 
   this.showCollisions = false;
@@ -77,13 +81,21 @@ GZ3D.Scene.prototype.init = function()
 
   var that = this;
 
-  // Need to use `document` instead of getDomElement in order to get events
-  // outside the webgl div element.
-  document.addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
+  // In case we are using sdfviewer, which doesn't depend on Jquery
+  // which these event listeners do use.
+  if (GZ3D.Gui !== undefined)
+  {
+    // Need to use `document` instead of getDomElement in order to get events
+    // outside the webgl div element.
+    document.addEventListener( 'mouseup',
+        function(event) {that.onPointerUp(event);}, false );
 
-  this.getDomElement().addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
+    document.addEventListener( 'keydown',
+        function(event) {that.onKeyDown(event);}, false );
+
+    this.getDomElement().addEventListener( 'touchend',
+        function(event) {that.onPointerUp(event);}, false );
+  }
 
   this.getDomElement().addEventListener( 'DOMMouseScroll',
       function(event) {that.onMouseScroll(event);}, false ); //firefox
@@ -91,16 +103,11 @@ GZ3D.Scene.prototype.init = function()
   this.getDomElement().addEventListener( 'mousewheel',
       function(event) {that.onMouseScroll(event);}, false );
 
-  document.addEventListener( 'keydown',
-      function(event) {that.onKeyDown(event);}, false );
-
   this.getDomElement().addEventListener( 'mousedown',
       function(event) {that.onPointerDown(event);}, false );
+
   this.getDomElement().addEventListener( 'touchstart',
       function(event) {that.onPointerDown(event);}, false );
-
-  this.getDomElement().addEventListener( 'touchend',
-      function(event) {that.onPointerUp(event);}, false );
 
   // Handles for translating and rotating objects
   this.modelManipulator = new GZ3D.Manipulator(this.camera, isTouchDevice,
@@ -108,7 +115,8 @@ GZ3D.Scene.prototype.init = function()
 
   this.timeDown = null;
 
-  this.controls = new THREE.OrbitControls(this.camera);
+  this.controls = new THREE.OrbitControls(this.camera,
+    this.renderer.domElement);
   this.scene.add(this.controls.targetIndicator);
 
   this.emitter = new EventEmitter2({ verbose: true });
@@ -364,7 +372,8 @@ GZ3D.Scene.prototype.onPointerDown = function(event)
     if (event.touches.length === 1)
     {
       pos = new THREE.Vector2(
-          event.touches[0].clientX, event.touches[0].clientY);
+          event.touches[0].clientX,
+          event.touches[0].clientY);
     }
     else if (event.touches.length === 2)
     {
@@ -468,7 +477,8 @@ GZ3D.Scene.prototype.onMouseScroll = function(event)
 {
   event.preventDefault();
 
-  var pos = new THREE.Vector2(event.clientX, event.clientY);
+  var pos = new THREE.Vector2(event.clientX,
+    event.clientY);
 
   var intersect = new THREE.Vector3();
   var model = this.getRayCastModel(pos, intersect);
@@ -554,11 +564,16 @@ GZ3D.Scene.prototype.onKeyDown = function(event)
  */
 GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
 {
+  // get renderer absolute position.
+  var canvasX = this.renderer.domElement.getBoundingClientRect().top;
+  var canvasY = this.renderer.domElement.getBoundingClientRect().left;
+
+  pos.setX(pos.x - canvasX);
+  pos.setY(pos.y - canvasY);
   var vector = new THREE.Vector3(
-      ((pos.x - this.renderer.domElement.offsetLeft)
-      / window.innerWidth) * 2 - 1,
-      -((pos.y - this.renderer.domElement.offsetTop)
-      / window.innerHeight) * 2 + 1, 1);
+    (pos.x / this.renderer.domElement.width) * 2 - 1,
+    -(pos.y / this.renderer.domElement.height) * 2 + 1, 1);
+
   vector.unproject(this.camera);
   var ray = new THREE.Raycaster( this.camera.position,
       vector.sub(this.camera.position).normalize() );
@@ -1380,7 +1395,9 @@ GZ3D.Scene.prototype.loadHeightmap = function(heights, width, height,
       }
     }
 
-    var material = new THREE.ShaderMaterial({
+    var material, options;
+
+    options = {
       uniforms:
       {
         texture0: { type: 't', value: textureLoaded[0]},
@@ -1397,11 +1414,16 @@ GZ3D.Scene.prototype.loadHeightmap = function(heights, width, height,
         lightDiffuse: { type: 'c', value: lightDiffuse},
         lightDir: { type: 'v3', value: lightDir}
       },
-      attributes: {},
-      vertexShader: document.getElementById( 'heightmapVS' ).innerHTML,
-      fragmentShader: document.getElementById( 'heightmapFS' ).innerHTML
-    });
+      attributes: {}
+    };
 
+    if (this.heightmapFS && this.heightmapVS)
+    {
+      options.uniforms.vertexShader = this.heightmapVS;
+      options.uniforms.fragmentShader = this.heightmapFS;
+    }
+
+    material = new THREE.ShaderMaterial(options);
     mesh = new THREE.Mesh( geometry, material);
   }
   else
@@ -1567,6 +1589,7 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 {
   var dae;
   var mesh = null;
+  var that = this;
   /*
   // Crashes: issue #36
   if (this.meshes[uri])
@@ -1607,10 +1630,10 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 
     dae = collada.scene;
     dae.updateMatrix();
-    this.scene.prepareColladaMesh(dae);
-    this.scene.meshes[uri] = dae;
+    that.prepareColladaMesh(dae);
+    that.meshes[uri] = dae;
     dae = dae.clone();
-    this.scene.useSubMesh(dae, submesh, centerSubmesh);
+    that.useSubMesh(dae, submesh, centerSubmesh);
 
     dae.name = uri;
     callback(dae);
@@ -2052,7 +2075,8 @@ GZ3D.Scene.prototype.showRadialMenu = function(e)
   var event = e.originalEvent;
 
   var pointer = event.touches ? event.touches[ 0 ] : event;
-  var pos = new THREE.Vector2(pointer.clientX, pointer.clientY);
+  var pos = new THREE.Vector2(pointer.clientX,
+    pointer.clientY);
 
   var intersect = new THREE.Vector3();
   var model = this.getRayCastModel(pos, intersect);
@@ -2221,7 +2245,6 @@ GZ3D.Scene.prototype.onRightClick = function(event, callback)
     callback(model);
   }
 };
-
 
 /**
  * Set model's view mode
