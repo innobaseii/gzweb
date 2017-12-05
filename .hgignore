@@ -7,6 +7,9 @@ build_*
 *~
 *.swp
 http/client/assets
-gz3d/utils/node_modules
 node_modules
 http/client
+coverage
+doc
+npm-debug.log
+test_results
