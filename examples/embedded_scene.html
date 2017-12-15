@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en" style="height: 100%">
+  <head>
+    <title>Embedded GzWeb</title>
+    <meta charset="utf-8">
+    <script src="../gz3d/build/gz3d.iface.full.js"></script>
+    <style>
+      body {
+        padding: 2em;
+        font-family: helvetica;
+      }
+      #container {
+        padding: 2em;
+        height: 50em;
+        width: 80%;
+      }
+    </style>
+  </head>
+
+  <body>
+
+    <h2>
+      Embedded GzWeb
+    </h2>
+
+    <p>
+      This example shows how to embed a GzWeb scene which is served from another URL into a page.
+    </p>
+
+    <div id="url-div">
+      <span>Server URL</span>
+      <input type="text" id="url-input" value="localhost:8080"></input>
+      <button onclick="init()">Connect!</button>
+    </div>
+
+    <center>
+      <div id="container">
+      </div>
+    </center>
+
+    <script>
+      if (!Detector.webgl)
+        Detector.addGetWebGLMessage();
+
+      var scene, container;
+
+      // Initialization
+      function init()
+      {
+        // Get URL
+        var url = document.getElementById('url-input').value;
+
+        // Clear URL input div
+        var urlDiv = document.getElementById('url-div');
+        while (urlDiv.firstChild) {
+          urlDiv.removeChild(urlDiv.firstChild);
+        }
+
+        // Initialize objects
+        var shaders = new GZ3D.Shaders();
+        scene = new GZ3D.Scene(shaders);
+        var iface = new GZ3D.GZIface(scene, url);
+        var sdfparser = new GZ3D.SdfParser(scene, undefined, iface);
+
+        // Configure scene
+        scene.grid.visible = true;
+
+        // Append to dom
+        container = document.getElementById( 'container' );
+        container.appendChild(scene.getDomElement());
+
+        window.addEventListener('resize', onWindowResize, false);
+        onWindowResize();
+
+        // Add URL to page
+        var urlHeader = document.createElement("h3");
+        urlHeader.appendChild(document.createTextNode("Connected to " + url));
+        urlDiv.appendChild(urlHeader);
+
+        animate();
+      }
+
+      // Callback when window is resized
+      function onWindowResize()
+      {
+        scene.setSize(container.clientWidth, container.clientHeight);
+      }
+
+      // Recursively called animation loop
+      function animate()
+      {
+        requestAnimationFrame(animate);
+        scene.render();
+      }
+    </script>
+
+  </body>
+</html>

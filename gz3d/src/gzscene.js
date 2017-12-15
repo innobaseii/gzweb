@@ -6,6 +6,7 @@
  */
 GZ3D.Scene = function(shaders)
 {
+  this.emitter = globalEmitter || new EventEmitter2({verboseMemoryLeak: true});
   this.shaders = shaders;
   this.init();
 };
@@ -30,6 +31,7 @@ GZ3D.Scene.prototype.init = function()
 
   // loaders
   this.textureLoader = new THREE.TextureLoader();
+  this.textureLoader.crossOrigin = '';
   this.colladaLoader = new THREE.ColladaLoader();
   this.objLoader = new THREE.OBJLoader();
   this.stlLoader = new THREE.STLLoader();
@@ -81,9 +83,6 @@ GZ3D.Scene.prototype.init = function()
 
   // Need to use `document` instead of getDomElement in order to get events
   // outside the webgl div element.
-  document.addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
-
   this.getDomElement().addEventListener( 'mouseup',
       function(event) {that.onPointerUp(event);}, false );
 
@@ -93,11 +92,9 @@ GZ3D.Scene.prototype.init = function()
   this.getDomElement().addEventListener( 'mousewheel',
       function(event) {that.onMouseScroll(event);}, false );
 
-  document.addEventListener( 'keydown',
+  this.getDomElement().addEventListener( 'keydown',
       function(event) {that.onKeyDown(event);}, false );
 
-  this.getDomElement().addEventListener( 'mousedown',
-      function(event) {that.onPointerDown(event);}, false );
   this.getDomElement().addEventListener( 'touchstart',
       function(event) {that.onPointerDown(event);}, false );
 
@@ -114,11 +111,12 @@ GZ3D.Scene.prototype.init = function()
       this.getDomElement());
   this.scene.add(this.controls.targetIndicator);
 
-  this.emitter = new EventEmitter2({ verbose: true });
-
   // Radial menu (only triggered by touch)
-  this.radialMenu = new GZ3D.RadialMenu(this.getDomElement());
-  this.sceneOrtho.add(this.radialMenu.menu);
+  if (typeof GZ3D.RadialMenu === 'function')
+  {
+    this.radialMenu = new GZ3D.RadialMenu(this.getDomElement());
+    this.sceneOrtho.add(this.radialMenu.menu);
+  }
 
   // Bounding Box
   var indices = new Uint16Array(
@@ -332,7 +330,7 @@ GZ3D.Scene.prototype.init = function()
 
 GZ3D.Scene.prototype.initScene = function()
 {
-  guiEvents.emit('show_grid', 'show');
+  this.emitter.emit('show_grid', 'show');
 
   // create a sun light
   var obj = this.createLight(3, new THREE.Color(0.8, 0.8, 0.8), 0.9,
@@ -457,8 +455,12 @@ GZ3D.Scene.prototype.onPointerUp = function(event)
   if (millisecs - this.timeDown < 150)
   {
     this.setManipulationMode('view');
-    $( '#view-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
+    // TODO: Remove jquery from scene
+    if (typeof GZ3D.Gui === 'function')
+    {
+      $( '#view-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
   }
   this.timeDown = null;
 };
@@ -520,7 +522,7 @@ GZ3D.Scene.prototype.onKeyDown = function(event)
   {
     if (this.selectedEntity)
     {
-      guiEvents.emit('delete_entity');
+      this.emitter.emit('delete_entity');
     }
   }
 
@@ -531,20 +533,24 @@ GZ3D.Scene.prototype.onKeyDown = function(event)
   }
 
   // Esc/R/T for changing manipulation modes
-  if (event.keyCode === 27) // Esc
+  // TODO: Remove jquery from scene
+  if (typeof GZ3D.Gui === 'function')
   {
-    $( '#view-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
-  }
-  if (event.keyCode === 82) // R
-  {
-    $( '#rotate-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
-  }
-  if (event.keyCode === 84) // T
-  {
-    $( '#translate-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
+    if (event.keyCode === 27) // Esc
+    {
+      $( '#view-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
+    if (event.keyCode === 82) // R
+    {
+      $( '#rotate-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
+    if (event.keyCode === 84) // T
+    {
+      $( '#translate-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
   }
 };
 
@@ -615,7 +621,7 @@ GZ3D.Scene.prototype.getRayCastModel = function(pos, intersect)
         model = model.parent;
       }
 
-      if (model === this.radialMenu.menu)
+      if (this.radialMenu && model === this.radialMenu.menu)
       {
         continue;
       }
@@ -669,7 +675,7 @@ GZ3D.Scene.prototype.render = function()
   // -pointer over menus
   // -spawning
   if (this.modelManipulator.hovered ||
-      this.radialMenu.showing ||
+      (this.radialMenu && this.radialMenu.showing) ||
       this.pointerOnMenu ||
       this.spawnModel.active)
   {
@@ -683,7 +689,10 @@ GZ3D.Scene.prototype.render = function()
   }
 
   this.modelManipulator.update();
-  this.radialMenu.update();
+  if (this.radialMenu)
+  {
+    this.radialMenu.update();
+  }
 
   this.renderer.clear();
   this.renderer.render(this.scene, this.camera);
@@ -1588,6 +1597,8 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 {
   var dae;
   var mesh = null;
+  var that = this;
+
   /*
   // Crashes: issue #36
   if (this.meshes[uri])
@@ -1600,18 +1611,16 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
   }
   */
 
-  var loader = new THREE.ColladaLoader();
-
   if (!filestring)
   {
-    loader.load(uri, function(collada)
+    this.colladaLoader.load(uri, function(collada)
     {
       meshReady(collada);
     });
   }
   else
   {
-    loader.parse(filestring, function(collada)
+    this.colladaLoader.parse(filestring, function(collada)
     {
       meshReady(collada);
     }, undefined);
@@ -1628,10 +1637,10 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 
     dae = collada.scene;
     dae.updateMatrix();
-    this.scene.prepareColladaMesh(dae);
-    this.scene.meshes[uri] = dae;
+    that.prepareColladaMesh(dae);
+    that.meshes[uri] = dae;
     dae = dae.clone();
-    this.scene.useSubMesh(dae, submesh, centerSubmesh);
+    that.useSubMesh(dae, submesh, centerSubmesh);
 
     dae.name = uri;
     callback(dae);
@@ -1798,9 +1807,9 @@ GZ3D.Scene.prototype.loadOBJ = function(uri, submesh, centerSubmesh, callback,
     var loadComplete = function()
     {
       obj = container;
-      this.scene.meshes[uri] = obj;
+      that.meshes[uri] = obj;
       obj = obj.clone();
-      this.scene.useSubMesh(obj, submesh, centerSubmesh);
+      that.useSubMesh(obj, submesh, centerSubmesh);
 
       obj.name = uri;
       callback(obj);
@@ -1882,15 +1891,16 @@ GZ3D.Scene.prototype.loadSTL = function(uri, submesh, centerSubmesh,
   callback)
 {
   var mesh = null;
+  var that = this;
   this.stlLoader.load(uri, function(geometry)
   {
     mesh = new THREE.Mesh( geometry );
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    this.scene.meshes[uri] = mesh;
+    that.meshes[uri] = mesh;
     mesh = mesh.clone();
-    this.scene.useSubMesh(mesh, submesh, centerSubmesh);
+    that.useSubMesh(mesh, submesh, centerSubmesh);
 
     mesh.name = uri;
     callback(mesh);
@@ -2070,6 +2080,11 @@ GZ3D.Scene.prototype.resetView = function()
  */
 GZ3D.Scene.prototype.showRadialMenu = function(e)
 {
+  if (!this.radialMenu)
+  {
+    return;
+  }
+
   var event = e.originalEvent;
 
   var pointer = event.touches ? event.touches[ 0 ] : event;
@@ -2363,7 +2378,7 @@ GZ3D.Scene.prototype.selectEntity = function(object)
       this.selectedEntity = object;
     }
     this.attachManipulator(object, this.manipulationMode);
-    guiEvents.emit('setTreeSelected', object.name);
+    this.emitter.emit('setTreeSelected', object.name);
   }
   else
   {
@@ -2374,7 +2389,7 @@ GZ3D.Scene.prototype.selectEntity = function(object)
     }
     this.hideBoundingBox();
     this.selectedEntity = null;
-    guiEvents.emit('setTreeDeselected');
+    this.emitter.emit('setTreeDeselected');
   }
 };
 
