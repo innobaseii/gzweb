@@ -4,6 +4,8 @@ var GZ3D = GZ3D || {
 
 var globalEmitter = new EventEmitter2({verboseMemoryLeak: true});
 
+// Assuming all mobile devices are touch devices.
+var isTouchDevice = /Mobi/.test(navigator.userAgent);
 /*global $:false */
 /*global angular*/
 
@@ -11,9 +13,6 @@ var emUnits = function(value)
     {
       return value*parseFloat($('body').css('font-size'));
     };
-
-// Assuming all mobile devices are touch devices.
-var isTouchDevice = /Mobi/.test(navigator.userAgent);
 
 var isWideScreen = function()
     {
@@ -3620,7 +3619,7 @@ GZ3D.GZIface.prototype.parseMaterial = function(material)
     return null;
   }
 
-  var uriPath = 'assets';
+  var uriPath = 'http://' + this.url + '/assets';
   var texture;
   var normalMap;
   var textureUri;
@@ -5844,6 +5843,7 @@ GZ3D.Scene.prototype.init = function()
 
   // loaders
   this.textureLoader = new THREE.TextureLoader();
+  this.textureLoader.crossOrigin = '';
   this.colladaLoader = new THREE.ColladaLoader();
   this.objLoader = new THREE.OBJLoader();
   this.stlLoader = new THREE.STLLoader();
@@ -5903,9 +5903,6 @@ GZ3D.Scene.prototype.init = function()
 
   // Need to use `document` instead of getDomElement in order to get events
   // outside the webgl div element.
-  document.addEventListener( 'mouseup',
-      function(event) {that.onPointerUp(event);}, false );
-
   this.getDomElement().addEventListener( 'mouseup',
       function(event) {that.onPointerUp(event);}, false );
 
@@ -5915,11 +5912,9 @@ GZ3D.Scene.prototype.init = function()
   this.getDomElement().addEventListener( 'mousewheel',
       function(event) {that.onMouseScroll(event);}, false );
 
-  document.addEventListener( 'keydown',
+  this.getDomElement().addEventListener( 'keydown',
       function(event) {that.onKeyDown(event);}, false );
 
-  this.getDomElement().addEventListener( 'mousedown',
-      function(event) {that.onPointerDown(event);}, false );
   this.getDomElement().addEventListener( 'touchstart',
       function(event) {that.onPointerDown(event);}, false );
 
@@ -6273,8 +6268,12 @@ GZ3D.Scene.prototype.onPointerUp = function(event)
   if (millisecs - this.timeDown < 150)
   {
     this.setManipulationMode('view');
-    $( '#view-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
+    // TODO: Remove jquery from scene
+    if (typeof GZ3D.Gui === 'function')
+    {
+      $( '#view-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
   }
   this.timeDown = null;
 };
@@ -6347,20 +6346,24 @@ GZ3D.Scene.prototype.onKeyDown = function(event)
   }
 
   // Esc/R/T for changing manipulation modes
-  if (event.keyCode === 27) // Esc
+  // TODO: Remove jquery from scene
+  if (typeof GZ3D.Gui === 'function')
   {
-    $( '#view-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
-  }
-  if (event.keyCode === 82) // R
-  {
-    $( '#rotate-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
-  }
-  if (event.keyCode === 84) // T
-  {
-    $( '#translate-mode' ).click();
-    $('input[type="radio"]').checkboxradio('refresh');
+    if (event.keyCode === 27) // Esc
+    {
+      $( '#view-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
+    if (event.keyCode === 82) // R
+    {
+      $( '#rotate-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
+    if (event.keyCode === 84) // T
+    {
+      $( '#translate-mode' ).click();
+      $('input[type="radio"]').checkboxradio('refresh');
+    }
   }
 };
 
@@ -7413,6 +7416,8 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 {
   var dae;
   var mesh = null;
+  var that = this;
+
   /*
   // Crashes: issue #36
   if (this.meshes[uri])
@@ -7425,18 +7430,16 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
   }
   */
 
-  var loader = new THREE.ColladaLoader();
-
   if (!filestring)
   {
-    loader.load(uri, function(collada)
+    this.colladaLoader.load(uri, function(collada)
     {
       meshReady(collada);
     });
   }
   else
   {
-    loader.parse(filestring, function(collada)
+    this.colladaLoader.parse(filestring, function(collada)
     {
       meshReady(collada);
     }, undefined);
@@ -7453,10 +7456,10 @@ GZ3D.Scene.prototype.loadCollada = function(uri, submesh, centerSubmesh,
 
     dae = collada.scene;
     dae.updateMatrix();
-    this.scene.prepareColladaMesh(dae);
-    this.scene.meshes[uri] = dae;
+    that.prepareColladaMesh(dae);
+    that.meshes[uri] = dae;
     dae = dae.clone();
-    this.scene.useSubMesh(dae, submesh, centerSubmesh);
+    that.useSubMesh(dae, submesh, centerSubmesh);
 
     dae.name = uri;
     callback(dae);
@@ -7623,9 +7626,9 @@ GZ3D.Scene.prototype.loadOBJ = function(uri, submesh, centerSubmesh, callback,
     var loadComplete = function()
     {
       obj = container;
-      this.scene.meshes[uri] = obj;
+      that.meshes[uri] = obj;
       obj = obj.clone();
-      this.scene.useSubMesh(obj, submesh, centerSubmesh);
+      that.useSubMesh(obj, submesh, centerSubmesh);
 
       obj.name = uri;
       callback(obj);
@@ -7707,15 +7710,16 @@ GZ3D.Scene.prototype.loadSTL = function(uri, submesh, centerSubmesh,
   callback)
 {
   var mesh = null;
+  var that = this;
   this.stlLoader.load(uri, function(geometry)
   {
     mesh = new THREE.Mesh( geometry );
     mesh.castShadow = true;
     mesh.receiveShadow = true;
 
-    this.scene.meshes[uri] = mesh;
+    that.meshes[uri] = mesh;
     mesh = mesh.clone();
-    this.scene.useSubMesh(mesh, submesh, centerSubmesh);
+    that.useSubMesh(mesh, submesh, centerSubmesh);
 
     mesh.name = uri;
     callback(mesh);
@@ -8886,7 +8890,7 @@ GZ3D.SdfParser = function(scene, gui, gziface)
 
   // set the sdf version
   this.SDF_VERSION = 1.5;
-  this.MATERIAL_ROOT = 'assets';
+  this.MATERIAL_ROOT = gziface ? gziface.url + '/assets' : 'assets';
   // true for using URLs to load files.
   // false for using the files loaded in the memory.
   this.usingFilesUrls = false;
@@ -8924,7 +8928,7 @@ GZ3D.SdfParser.prototype.init = function()
     var that = this;
     this.emitter.on('connectionError', function() {
       // init scene and show popup only for the first connection error
-      this.emitter.emit('notification_popup',
+      that.emitter.emit('notification_popup',
               'GzWeb is currently running' +
               'without a server, and materials could not be loaded.' +
               'When connected scene will be reinitialized', 5000);
@@ -8938,7 +8942,7 @@ GZ3D.SdfParser.prototype.init = function()
     this.emitter.on('gzstatus', function(gzstatus) {
       if (gzstatus === 'error')
       {
-        this.emitter.emit('notification_popup', 'GzWeb is currently ' +
+        that.emitter.emit('notification_popup', 'GzWeb is currently ' +
                 'running without a GzServer,'
                 + 'and Scene is reinitialized.', 5000);
         that.onConnectionError();
