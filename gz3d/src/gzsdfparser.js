@@ -35,6 +35,9 @@ GZ3D.SdfParser = function(scene, gui, gziface)
   this.meshes = {};
   this.mtls = {};
   this.textures = {};
+
+  // Should contain model files URLs if not using gzweb model files hierarchy.
+  this.customUrls = [];
 };
 
 /**
@@ -75,6 +78,16 @@ GZ3D.SdfParser.prototype.init = function()
   {
     this.scene.initScene();
   }
+};
+
+/**
+ * Pushes Urls into the customUrls array where the parser looks for assets.
+ * this array should be usedd if the assets files hierarchy is different than
+ * that of gzweb.
+ */
+GZ3D.SdfParser.prototype.addUrl = function(url)
+{
+  this.customUrls.push(url);
 };
 
 /**
@@ -283,7 +296,9 @@ GZ3D.SdfParser.prototype.parseBool = function(boolStr)
 /**
  * Parses SDF material element which is going to be used by THREE library
  * It matches material scripts with the material objects which are
- * already parsed by gzbridge and saved by SDFParser
+ * already parsed by gzbridge and saved by SDFParser.
+ * In case of using custom Urls for the textures, the URLs should be added
+ * to the customUrls array to be loaded.
  * @param {object} material - SDF material object
  * @returns {object} material - material object which has the followings:
  * texture, normalMap, ambient, diffuse, specular, opacity
@@ -356,7 +371,23 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
           }
           else
           {
-            texture = this.MATERIAL_ROOT + '/' + textureUri + '/' + mat.texture;
+            if (this.customUrls.length !== 0)
+            {
+              for (var k = 0; k < this.customUrls.length; k++)
+              {
+                if (this.customUrls[k].indexOf(mat.texture) > -1)
+                {
+                  texture = this.customUrls[k];
+                  this.customUrls.splice(k, 1);
+                  break;
+                }
+              }
+            }
+            else
+            {
+              texture = this.MATERIAL_ROOT + '/' + textureUri + '/' +
+                mat.texture;
+            }
           }
         }
       }
@@ -398,8 +429,23 @@ GZ3D.SdfParser.prototype.createMaterial = function(material)
       }
       else
       {
-        normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
-          normalMapName + '.png';
+        if (this.customUrls.length !== 0)
+        {
+          for (var j = 0; j < this.customUrls.length; j++)
+          {
+            if (this.customUrls[j].indexOf(normalMapName + '.png') > -1)
+            {
+              normalMap = this.customUrls[j];
+              this.customUrls.splice(j, 1);
+              break;
+            }
+          }
+        }
+        else
+        {
+          normalMap = this.MATERIAL_ROOT + '/' + mapUri + '/' +
+            normalMapName + '.png';
+        }
       }
 
     }
@@ -446,7 +492,9 @@ GZ3D.SdfParser.prototype.parseSize = function(sizeStr)
  * object.
  * @param {object} geom - SDF geometry object which determines the geometry
  *  of the object and can have following properties: box, cylinder, sphere,
- *   plane, mesh
+ *  plane, mesh.
+ *  Note that in case of using custom Urls for the meshs, the URLS should be
+ *  added to the array cistomUrls to be used instead of the default Url.
  * @param {object} mat - SDF material object which is going to be parsed
  * by createMaterial function
  * @param {object} parent - parent 3D object
@@ -507,10 +555,10 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
       var ext = modelUri.substr(-4).toLowerCase();
       var materialName = parent.name + '::' + modelUri;
       this.entityMaterial[materialName] = material;
+      var meshFileName = meshUri.substring(meshUri.lastIndexOf('/') + 1);
 
       if (!this.usingFilesUrls)
       {
-        var meshFileName = meshUri.substring(meshUri.lastIndexOf('/') + 1);
         var meshFile = this.meshes[meshFileName];
         if (ext === '.obj')
         {
@@ -547,7 +595,19 @@ GZ3D.SdfParser.prototype.createGeom = function(geom, mat, parent)
       }
       else
       {
-        that.scene.loadMeshFromUri(modelUri, submesh, centerSubmesh,
+        if (this.customUrls.length !== 0)
+        {
+          for (var k = 0; k < this.customUrls.length; k++)
+          {
+            if (this.customUrls[k].indexOf(meshFileName) > -1)
+            {
+              modelUri = this.customUrls[k];
+              this.customUrls.splice(k, 1);
+              break;
+            }
+          }
+        }
+        this.scene.loadMeshFromUri(modelUri, submesh, centerSubmesh,
           function (mesh)
           {
             if (material)
@@ -1032,12 +1092,36 @@ GZ3D.SdfParser.prototype.createCylinderSDF = function(translation, euler)
 /**
  * Loads SDF of the model. It first constructs the url of the model
  * according to modelname
- * @param {string} modelName - name of the model
+ * @param {string} modelName - name of the model, the customUrls is not empty
+ * the modelName parm wouldn't be used, the function will search for the
+ * URL that has the 'model.sdf' and loads it.
  * @returns {XMLDocument} modelDOM - SDF DOM object of the loaded model
  */
 GZ3D.SdfParser.prototype.loadModel = function(modelName)
 {
-  var modelFile = this.MATERIAL_ROOT + '/' + modelName + '/model.sdf';
+  var modelFile = '', found;
+
+  if (this.customUrls.length !== 0)
+  {
+    for (var k = 0; k < this.customUrls.length; k++)
+    {
+      if (this.customUrls[k].indexOf('.sdf') > -1)
+      {
+        modelFile = this.customUrls[k];
+        this.customUrls.splice(k, 1);
+        found = true;
+        break;
+      }
+    }
+  }
+  else if (modelName !== undefined)
+  {
+    modelFile = this.MATERIAL_ROOT + '/' + modelName + '/model.sdf';
+  }
+  else if (modelName === undefined || !found)
+  {
+    console.error('Must provide either `this.customUrls` or `modelName`');
+  }
 
   var xhttp = new XMLHttpRequest();
   xhttp.overrideMimeType('text/xml');
